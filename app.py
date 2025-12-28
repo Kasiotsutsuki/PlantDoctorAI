@@ -1,14 +1,18 @@
 import os
-import tensorflow as tf
+# import tensorflow as tf
 import numpy as np
-from tensorflow.keras.preprocessing import image
-from PIL import Image
-import cv2
-from keras.models import load_model
+# from tensorflow.keras.preprocessing import image
+# from PIL import Image
+# import cv2
+from tensorflow.keras.models import load_model
 from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import load_img,img_to_array
 app = Flask(__name__)
+
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 model =load_model('model.h5')
 print('Model loaded. Check http://127.0.0.1:5000/')
@@ -17,7 +21,7 @@ labels = {0: 'Healthy', 1: 'Powdery', 2: 'Rust'}
 
 
 def getResult(image_path):
-    img = load_img(image_path, target_size=(256, 256))
+    img = load_img(image_path, target_size=(224, 224))
     x = img_to_array(img)
     x = x.astype('float32') / 255.
     x = np.expand_dims(x, axis=0)

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Dataset
+Dataset/
+dataset/
+temp/
+
+# Model files
+model.h5
+
+# Uploads (Flask)
+uploads/
+
+# Virtual env
+venv/
+.env/
+
+# OS junk
+.DS_Store
+Thumbs.db
