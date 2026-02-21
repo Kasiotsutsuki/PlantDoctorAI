@@ -3,76 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <title>Plant Doctor AI</title>
-
-    <!-- Bootstrap -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Custom CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/test.css') }}" rel="stylesheet">
+    <script>
+        // Apply saved theme BEFORE paint to prevent flash
+        (function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .nav-avatar-img {
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        .nav-avatar-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- ===================== NAVBAR ===================== -->
 <nav class="navbar fixed-top">
     <div class="nav-container">
-
-        <!-- Brand -->
-        <div class="brand-title">
-            🌱 Plant Doctor AI
-        </div>
+        <div class="brand-title">🌱 Plant Doctor AI</div>
         <div class="hamburger" id="hamburger">
-    <span></span>
-    <span></span>
-    <span></span>
-</div>
+            <span></span><span></span><span></span>
+        </div>
+        <div class="nav-links" id="navLinks">
+            <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">Home</a>
+            <a href="/learn" class="nav-item {% if request.path == '/learn' %}active{% endif %}">Learn</a>
+            <a href="/about" class="nav-item {% if request.path == '/about' %}active{% endif %}">About</a>
 
+            <!-- Dark/Light Toggle -->
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
 
-       <div class="nav-links">
-    <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">Home</a>
-    <a href="/learn" class="nav-item {% if request.path == '/learn' %}active{% endif %}">Learn</a>
-    <a href="/about" class="nav-item {% if request.path == '/about' %}active{% endif %}">About</a>
-    <a href="/login" class="nav-item nav-login {% if request.path == '/login' %}active{% endif %}">Login</a>
-</div>
-
-
+            {% if session.get("user_id") %}
+            <div class="nav-avatar-wrapper">
+                {% if session.get("picture") %}
+                <div class="nav-avatar nav-avatar-img" id="avatarBtn">
+                    <img src="{{ session.get('picture') }}" alt="Profile" referrerpolicy="no-referrer">
+                </div>
+                {% else %}
+                <div class="nav-avatar" id="avatarBtn">
+                    {{ session.get("name", "U")[0]|upper }}
+                </div>
+                {% endif %}
+                <div class="nav-dropdown" id="avatarMenu">
+                    <div class="dropdown-name">{{ session.name }}</div>
+                    <div class="dropdown-email">{{ session.email }}</div>
+                    <hr>
+                    <a href="/logout" class="dropdown-link">Logout</a>
+                </div>
+            </div>
+            {% else %}
+                <a href="/login" class="nav-item nav-login">Login</a>
+            {% endif %}
+        </div>
     </div>
 </nav>
 
-<div class="sidebar" id="sidebar">
-    <h5>🧠 Scan History</h5>
-    <div class="history-item">Bacterial Spot</div>
-    <div class="history-item">Leaf Blight</div>
+<button id="menu-btn" class="menu-btn">☰</button>
+
+<div id="sidebar" class="sidebar">
+    <h5 class="sidebar-title">📜 Scan History</h5>
+    <ul class="history-list fancy-history">
+    {% if scan_history and scan_history|length > 0 %}
+        {% for scan in scan_history %}
+        <li class="history-card" onclick="selectScan(this)">
+            <div class="history-main">
+                <span class="history-disease">{{ scan.disease }}</span>
+                <span class="history-confidence">{{ scan.confidence }}%</span>
+            </div>
+            <div class="history-bar">
+                <div class="history-bar-fill" style="width: {{ scan.confidence }}%;"></div>
+            </div>
+            <div class="history-time">{{ scan.created_at.strftime('%d %b, %I:%M %p') }}</div>
+        </li>
+        {% endfor %}
+    {% else %}
+        <li class="empty">No scans yet</li>
+    {% endif %}
+    </ul>
 </div>
 
-<button class="sidebar-toggle" id="sidebarToggle">☰</button>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
-
-<div class="page-offset">
+<div class="page-offset" id="mainContent">
     {% block content %}{% endblock %}
 </div>
 
-<!-- Ripple animation JS -->
 <script src="{{ url_for('static', filename='js/nav-hover.js') }}"></script>
 
 <script>
-const hamburger = document.getElementById("hamburger");
-const navLinks = document.querySelector(".nav-links");
+document.getElementById("hamburger").addEventListener("click", () => {
+    document.getElementById("navLinks").classList.toggle("open");
+});
 
-hamburger.addEventListener("click", () => {
-    navLinks.classList.toggle("open");
+document.getElementById("menu-btn").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("mainContent").classList.toggle("shift");
+});
+
+const avatarBtn = document.getElementById("avatarBtn");
+const avatarMenu = document.getElementById("avatarMenu");
+if (avatarBtn) {
+    avatarBtn.addEventListener("click", () => avatarMenu.classList.toggle("show"));
+    document.addEventListener("click", (e) => {
+        if (!avatarBtn.contains(e.target) && !avatarMenu.contains(e.target))
+            avatarMenu.classList.remove("show");
+    });
+}
+
+function selectScan(el) {
+    document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+}
+</script>
+
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+
+<!-- DARK / LIGHT MODE -->
+<script>
+const toggle = document.getElementById('themeToggle');
+
+function applyTheme(isDark) {
+    document.body.classList.toggle('dark-mode', isDark);
+    document.documentElement.classList.toggle('dark-mode', isDark);
+    toggle.textContent = isDark ? '☀️' : '🌙';
+}
+
+applyTheme(localStorage.getItem('theme') === 'dark');
+
+toggle.addEventListener('click', () => {
+    const isDark = !document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    applyTheme(isDark);
 });
 </script>
-
-<script>
-document.getElementById("sidebarToggle").onclick = () => {
-    document.getElementById("sidebar").classList.toggle("open");
-};
-</script>
-
 
 </body>
 </html>

@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="learn-page">
+
+    <div class="learn-hero">
+        <div class="learn-hero-label">Field Guide</div>
+        <h1>Plant Disease <em>Library</em></h1>
+        <p>A reference guide to 38 plant diseases — symptoms, causes, and recommended treatments.</p>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item"><span class="stat-num">38</span><span class="stat-label">Diseases</span></div>
+        <div class="stat-item"><span class="stat-num">14</span><span class="stat-label">Plant Species</span></div>
+        <div class="stat-item"><span class="stat-num">5</span><span class="stat-label">Disease Types</span></div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search disease or plant...">
+        </div>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="fungal">Fungal</button>
+        <button class="filter-btn" data-filter="bacterial">Bacterial</button>
+        <button class="filter-btn" data-filter="viral">Viral</button>
+        <button class="filter-btn" data-filter="healthy">Healthy</button>
+        <button class="filter-btn" data-filter="pest">Pest</button>
+    </div>
+
+    <div class="disease-grid" id="diseaseGrid">
+
+        <div class="disease-card" data-type="fungal" data-name="apple scab apple">
+            <div class="card-accent" style="background:linear-gradient(90deg,#f97316,#ea580c)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍎</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Apple Scab</div><div class="card-plant">Apple</div>
+                <div class="card-desc">Dark, olive-green to brown scab-like lesions on leaves and fruit, causing distortion and premature leaf drop.</div>
+                <div class="card-expand" id="e0"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply fungicides early in the season and remove fallen infected leaves to break the disease cycle.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e0')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="apple black rot apple">
+            <div class="card-accent" style="background:linear-gradient(90deg,#dc2626,#991b1b)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍎</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Apple Black Rot</div><div class="card-plant">Apple</div>
+                <div class="card-desc">Circular brown lesions with purple borders on leaves, and rotting of fruit starting from the blossom end.</div>
+                <div class="card-expand" id="e1"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Prune dead wood, remove mummified fruit, and apply copper-based fungicides during the growing season.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e1')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="apple cedar rust apple">
+            <div class="card-accent" style="background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍎</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Apple Cedar Rust</div><div class="card-plant">Apple</div>
+                <div class="card-desc">Bright orange-yellow spots on upper leaf surfaces with tube-like growths on the underside.</div>
+                <div class="card-expand" id="e2"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove nearby cedar trees if possible, and apply protective fungicides from bud break through early summer.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e2')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="healthy" data-name="apple healthy">
+            <div class="card-accent" style="background:linear-gradient(90deg,#4ade80,#16a34a)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍎</span><span class="card-badge badge-healthy">Healthy</span></div>
+                <div class="card-name">Apple Healthy</div><div class="card-plant">Apple</div>
+                <div class="card-desc">Uniform green coloration with no lesions or abnormal growth. No signs of disease.</div>
+                <div class="card-expand" id="e3"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">No treatment required. Maintain regular watering, fertilization, and monitoring.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e3')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="cherry powdery mildew cherry">
+            <div class="card-accent" style="background:linear-gradient(90deg,#fda4af,#fb7185)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍒</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Cherry Powdery Mildew</div><div class="card-plant">Cherry</div>
+                <div class="card-desc">White powdery fungal growth on young leaves and shoots, causing curling and distortion.</div>
+                <div class="card-expand" id="e5"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply sulfur-based fungicides and ensure good air circulation by pruning dense canopy areas.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e5')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="corn gray leaf spot corn maize">
+            <div class="card-accent" style="background:linear-gradient(90deg,#94a3b8,#64748b)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🌽</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Corn Gray Leaf Spot</div><div class="card-plant">Corn / Maize</div>
+                <div class="card-desc">Rectangular gray to tan lesions parallel to leaf veins, reducing photosynthesis significantly.</div>
+                <div class="card-expand" id="e7"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply foliar fungicides and use resistant hybrids. Practice crop rotation to reduce disease pressure.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e7')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="corn common rust corn maize">
+            <div class="card-accent" style="background:linear-gradient(90deg,#b45309,#92400e)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🌽</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Corn Common Rust</div><div class="card-plant">Corn / Maize</div>
+                <div class="card-desc">Small, oval, reddish-brown pustules scattered across both leaf surfaces, releasing rust-colored spores.</div>
+                <div class="card-expand" id="e8"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply fungicides at early sign of infection and use rust-resistant corn varieties.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e8')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="corn northern leaf blight corn maize">
+            <div class="card-accent" style="background:linear-gradient(90deg,#65a30d,#4d7c0f)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🌽</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Corn Northern Leaf Blight</div><div class="card-plant">Corn / Maize</div>
+                <div class="card-desc">Long, cigar-shaped gray-green lesions up to 15cm, causing significant yield loss in severe cases.</div>
+                <div class="card-expand" id="e9"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Use resistant hybrids, apply fungicides when lesions first appear, and rotate crops annually.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e9')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="grape black rot grape">
+            <div class="card-accent" style="background:linear-gradient(90deg,#7c3aed,#6d28d9)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍇</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Grape Black Rot</div><div class="card-plant">Grape</div>
+                <div class="card-desc">Brown circular lesions with dark borders on leaves; fruit shrivels into hard black mummies.</div>
+                <div class="card-expand" id="e11"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove infected plant material, apply fungicides from bud break, and ensure good canopy airflow.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e11')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="grape esca black measles grape">
+            <div class="card-accent" style="background:linear-gradient(90deg,#be123c,#9f1239)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍇</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Grape Esca (Black Measles)</div><div class="card-plant">Grape</div>
+                <div class="card-desc">Tiger-stripe pattern of yellowing and browning between leaf veins; can cause sudden vine collapse.</div>
+                <div class="card-expand" id="e12"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Prune infected wood during dry weather, protect pruning wounds, and avoid water stress.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e12')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="bacterial" data-name="orange huanglongbing citrus orange">
+            <div class="card-accent" style="background:linear-gradient(90deg,#fb923c,#f97316)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍊</span><span class="card-badge badge-bacterial">Bacterial</span></div>
+                <div class="card-name">Orange Huanglongbing</div><div class="card-plant">Orange / Citrus</div>
+                <div class="card-desc">Asymmetric yellowing of leaves and small misshapen bitter fruit. A devastating bacterial disease with no cure.</div>
+                <div class="card-expand" id="e15"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove and destroy infected trees immediately. Control Asian citrus psyllid insects that spread the disease.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e15')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="bacterial" data-name="peach bacterial spot peach">
+            <div class="card-accent" style="background:linear-gradient(90deg,#ec4899,#db2777)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍑</span><span class="card-badge badge-bacterial">Bacterial</span></div>
+                <div class="card-name">Peach Bacterial Spot</div><div class="card-plant">Peach</div>
+                <div class="card-desc">Small water-soaked spots turning brown with yellow halos, causing defoliation in severe cases.</div>
+                <div class="card-expand" id="e16"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply copper-based bactericides during the growing season and avoid overhead irrigation.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e16')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="bacterial" data-name="bell pepper bacterial spot pepper">
+            <div class="card-accent" style="background:linear-gradient(90deg,#22d3ee,#06b6d4)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🫑</span><span class="card-badge badge-bacterial">Bacterial</span></div>
+                <div class="card-name">Bell Pepper Bacterial Spot</div><div class="card-plant">Bell Pepper</div>
+                <div class="card-desc">Small, water-soaked lesions becoming brown with yellow borders, affecting both leaves and fruit.</div>
+                <div class="card-expand" id="e18"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Use copper bactericides, avoid working with wet plants, and remove infected plant debris.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e18')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="potato early blight potato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#a16207,#854d0e)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🥔</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Potato Early Blight</div><div class="card-plant">Potato</div>
+                <div class="card-desc">Dark brown spots with concentric rings forming a target pattern, typically on older lower leaves first.</div>
+                <div class="card-expand" id="e20"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply fungicides, remove infected foliage, and practice crop rotation each season.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e20')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="potato late blight potato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#0369a1,#075985)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🥔</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Potato Late Blight</div><div class="card-plant">Potato</div>
+                <div class="card-desc">Water-soaked lesions rapidly turning brown and black, with white mold on the underside in humid conditions.</div>
+                <div class="card-expand" id="e21"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply systemic fungicides immediately, destroy severely infected plants, and avoid overhead watering.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e21')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="squash powdery mildew squash">
+            <div class="card-accent" style="background:linear-gradient(90deg,#84cc16,#65a30d)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🥒</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Squash Powdery Mildew</div><div class="card-plant">Squash</div>
+                <div class="card-desc">White powdery coating on leaf surfaces that causes yellowing and premature leaf death.</div>
+                <div class="card-expand" id="e25"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply potassium bicarbonate or sulfur-based fungicides and improve air circulation around plants.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e25')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="strawberry leaf scorch strawberry">
+            <div class="card-accent" style="background:linear-gradient(90deg,#f43f5e,#fb7185)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍓</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Strawberry Leaf Scorch</div><div class="card-plant">Strawberry</div>
+                <div class="card-desc">Small purple spots that enlarge and cause leaf edges to appear scorched and brown.</div>
+                <div class="card-expand" id="e26"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove infected leaves, apply appropriate fungicides, and avoid overhead irrigation.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e26')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="bacterial" data-name="tomato bacterial spot tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#6366f1,#4f46e5)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-bacterial">Bacterial</span></div>
+                <div class="card-name">Tomato Bacterial Spot</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Small, water-soaked dark spots with yellow halos, spreading rapidly in warm wet weather.</div>
+                <div class="card-expand" id="e28"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply copper bactericides, avoid overhead watering, and remove infected plant debris promptly.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e28')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="tomato early blight tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#d97706,#b45309)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Tomato Early Blight</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Dark brown spots with concentric rings on older leaves, causing yellowing and defoliation from the bottom up.</div>
+                <div class="card-expand" id="e29"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove infected lower leaves, apply fungicides, and mulch around plants to prevent soil splash.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e29')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="tomato late blight tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#1d4ed8,#1e40af)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Tomato Late Blight</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Rapidly spreading water-soaked lesions turning dark brown, with white mold in humid conditions.</div>
+                <div class="card-expand" id="e30"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply systemic fungicides immediately at first sign. Remove and destroy severely infected plants.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e30')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="fungal" data-name="tomato leaf mold tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#a3e635,#84cc16)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-fungal">Fungal</span></div>
+                <div class="card-name">Tomato Leaf Mold</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Yellow patches on upper leaf surfaces with olive-green to gray mold on the underside, common in greenhouses.</div>
+                <div class="card-expand" id="e31"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Improve ventilation, reduce humidity below 85%, and apply appropriate fungicides.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e31')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="pest" data-name="tomato spider mites tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#f97316,#ea580c)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-pest">Pest</span></div>
+                <div class="card-name">Tomato Spider Mites</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Tiny yellow stippling on leaves caused by spider mite feeding, with fine webbing visible on undersides.</div>
+                <div class="card-expand" id="e33"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Apply miticides or neem oil, increase humidity, and introduce predatory mites as biological control.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e33')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="viral" data-name="tomato yellow leaf curl virus tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-viral">Viral</span></div>
+                <div class="card-name">Tomato Yellow Leaf Curl Virus</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Leaves curl upward and turn yellow, with stunted plant growth. Spread by whiteflies.</div>
+                <div class="card-expand" id="e35"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove infected plants immediately and control whitefly populations with insecticides or sticky traps.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e35')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="viral" data-name="tomato mosaic virus tomato">
+            <div class="card-accent" style="background:linear-gradient(90deg,#f43f5e,#e11d48)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-viral">Viral</span></div>
+                <div class="card-name">Tomato Mosaic Virus</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Mottled light and dark green pattern on leaves with distortion and stunted growth.</div>
+                <div class="card-expand" id="e36"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">Remove and destroy infected plants. Control aphid vectors and disinfect tools between plants.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e36')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+        <div class="disease-card" data-type="healthy" data-name="tomato healthy">
+            <div class="card-accent" style="background:linear-gradient(90deg,#4ade80,#16a34a)"></div>
+            <div class="card-body">
+                <div class="card-top"><span class="card-icon">🍅</span><span class="card-badge badge-healthy">Healthy</span></div>
+                <div class="card-name">Tomato Healthy</div><div class="card-plant">Tomato</div>
+                <div class="card-desc">Uniform green color with no signs of disease or infection. Plant is in good condition.</div>
+                <div class="card-expand" id="e37"><hr class="expand-divider"><div class="cure-label">💊 Treatment</div><div class="cure-text">No treatment required. Maintain proper watering, staking, and routine monitoring.</div></div>
+                <div class="card-footer"><button class="expand-btn" onclick="tc(this,'e37')">See treatment <span class="expand-arrow">↓</span></button></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🔍</div>
+        <p>No diseases found for your search.</p>
+    </div>
+
+</div>
+
+<script>
+function tc(btn, id) {
+    const panel = document.getElementById(id);
+    const arrow = btn.querySelector('.expand-arrow');
+    const isOpen = panel.classList.contains('open');
+    panel.classList.toggle('open');
+    arrow.classList.toggle('flipped', !isOpen);
+    btn.childNodes[0].textContent = isOpen ? 'See treatment ' : 'Hide treatment ';
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterCards();
+    });
+});
+
+document.getElementById('searchInput').addEventListener('input', filterCards);
+
+function filterCards() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const filter = document.querySelector('.filter-btn.active').dataset.filter;
+    let visible = 0;
+    document.querySelectorAll('.disease-card').forEach(card => {
+        const show = (filter === 'all' || card.dataset.type === filter) && card.dataset.name.includes(search);
+        card.classList.toggle('hidden', !show);
+        if (show) visible++;
+    });
+    document.getElementById('emptyState').classList.toggle('show', visible === 0);
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="about-page">
+
+    <!-- Hero -->
+    <div class="about-hero">
+        <div class="about-label">About the Project</div>
+        <h1>Built to Help <em>Farmers</em><br>Diagnose Faster</h1>
+        <p>Plant Doctor AI is a final year project that uses deep learning to identify plant diseases from leaf images — making early diagnosis accessible to everyone.</p>
+    </div>
+
+    <hr class="about-divider">
+
+    <!-- Problem / Solution -->
+    <div class="about-section">
+        <div class="section-label">The Problem</div>
+        <div class="section-title">Why This Matters</div>
+        <p class="section-text">Plant diseases cause an estimated 20–40% of global crop losses every year. In developing regions, farmers often lack access to agricultural experts, and by the time a disease is identified, significant damage has already occurred.</p>
+        <div class="ps-grid">
+            <div class="ps-card">
+                <div class="ps-icon">😟</div>
+                <div class="ps-title">Before Plant Doctor AI</div>
+                <div class="ps-text">Farmers wait days or weeks for an expert diagnosis. By then, the disease has already spread to neighbouring crops.</div>
+            </div>
+            <div class="ps-card solution">
+                <div class="ps-icon">🌱</div>
+                <div class="ps-title">With Plant Doctor AI</div>
+                <div class="ps-text">Upload a single leaf photo and receive an instant diagnosis with treatment recommendations — no expertise required.</div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="about-divider">
+
+    <!-- Stats -->
+    <div class="about-section">
+        <div class="section-label">By the Numbers</div>
+        <div class="section-title">Project at a Glance</div>
+        <div class="stats-row">
+            <div class="stat-box"><span class="stat-big">38</span><span class="stat-small">Disease Classes</span></div>
+            <div class="stat-box"><span class="stat-big">87k</span><span class="stat-small">Training Images</span></div>
+            <div class="stat-box"><span class="stat-big">94%+</span><span class="stat-small">Val Accuracy</span></div>
+            <div class="stat-box"><span class="stat-big">14</span><span class="stat-small">Plant Species</span></div>
+        </div>
+    </div>
+
+    <hr class="about-divider">
+
+    <!-- How it works -->
+    <div class="about-section">
+        <div class="section-label">Under the Hood</div>
+        <div class="section-title">How It Works</div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-content">
+                    <div class="step-title">Image Upload</div>
+                    <div class="step-text">User uploads a clear photo of a plant leaf through the web interface.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-content">
+                    <div class="step-title">Preprocessing</div>
+                    <div class="step-text">The image is resized to 224×224 pixels and normalised for model input.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-content">
+                    <div class="step-title">CNN Inference</div>
+                    <div class="step-text">MobileNetV2 (fine-tuned via transfer learning) classifies the leaf across 38 disease categories.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <div class="step-content">
+                    <div class="step-title">Result & Recommendation</div>
+                    <div class="step-text">The top prediction is displayed with confidence score, disease description, and treatment advice.</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">05</div>
+                <div class="step-content">
+                    <div class="step-title">History Saved</div>
+                    <div class="step-text">Each scan is stored in the user's personal history for future reference and monitoring.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="about-divider">
+
+    <!-- Tech Stack -->
+    <div class="about-section">
+        <div class="section-label">Technology</div>
+        <div class="section-title">Tech Stack</div>
+        <div class="tech-grid">
+            <div class="tech-item"><div class="tech-icon">🐍</div><div class="tech-name">Python</div><div class="tech-desc">Core language</div></div>
+            <div class="tech-item"><div class="tech-icon">🧠</div><div class="tech-name">TensorFlow / Keras</div><div class="tech-desc">CNN model training</div></div>
+            <div class="tech-item"><div class="tech-icon">📱</div><div class="tech-name">MobileNetV2</div><div class="tech-desc">Transfer learning base</div></div>
+            <div class="tech-item"><div class="tech-icon">🌐</div><div class="tech-name">Flask</div><div class="tech-desc">Web framework</div></div>
+            <div class="tech-item"><div class="tech-icon">🗄️</div><div class="tech-name">MySQL</div><div class="tech-desc">User & scan data</div></div>
+            <div class="tech-item"><div class="tech-icon">🎨</div><div class="tech-name">Bootstrap + CSS</div><div class="tech-desc">Frontend UI</div></div>
+        </div>
+    </div>
+
+    <hr class="about-divider">
+
+    <!-- Roadmap -->
+    <div class="about-section">
+        <div class="section-label">What's Next</div>
+        <div class="section-title">Future Roadmap</div>
+        <div class="future-grid">
+            <div class="future-item"><div class="future-icon">🔐</div><div class="future-text">Google OAuth login for faster, easier access</div></div>
+            <div class="future-item"><div class="future-icon">☁️</div><div class="future-text">Cloud deployment on Render or Railway</div></div>
+            <div class="future-item"><div class="future-icon">📊</div><div class="future-text">Crop health analytics dashboard for farmers</div></div>
+            <div class="future-item"><div class="future-icon">🌍</div><div class="future-text">Multi-language support including Telugu</div></div>
+            <div class="future-item"><div class="future-icon">📲</div><div class="future-text">Mobile PWA for offline field scanning</div></div>
+            <div class="future-item"><div class="future-icon">🎙️</div><div class="future-text">Voice-based diagnosis for low-literacy farmers</div></div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="about-cta">
+        <div class="cta-title">Try It Yourself</div>
+        <p class="cta-text">Upload a leaf image and get an instant AI diagnosis.</p>
+        <a href="/" class="cta-btn">✅ Diagnose a Plant</a>
+    </div>
+
+</div>
+
+{% endblock %}

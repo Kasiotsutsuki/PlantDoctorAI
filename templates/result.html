@@ -2,49 +2,122 @@
 {% block content %}
 
 <div class="container d-flex justify-content-center">
-    <div class="result-card text-center">
+    <div class="result-card">
 
-        <h3 class="section-title">🌿 Plant Doctor AI Diagnosis</h3>
+        <!-- Title -->
+        <h3 class="result-title">🌿 Plant Doctor AI Diagnosis</h3>
 
-        <img src="{{ image_path }}" class="result-img">
+        <!-- Image -->
+        <img src="{{ image_path }}" class="result-img" alt="Leaf image">
 
-        <p id="ai-text"></p>
+        <!-- Status -->
+        <p class="status-text">🧠 Analysis Complete</p>
 
-        <a href="/" class="btn btn-outline-success mt-4">
-            Check Another Plant
-        </a>
+<!-- Diagnosis -->
+<div class="result-block">
+    <div class="block-header">🌿 Diagnosis</div>
+    <div class="block-text" id="diagnosisText"></div>
+</div>
+
+<!-- Confidence -->
+<div class="result-block">
+    <div class="block-header">📊 Confidence</div>
+    <div class="block-value">{{ confidence }}%</div>
+
+    <div class="confidence-bar">
+        <div class="confidence-fill" id="confidenceFill"></div>
+    </div>
+</div>
+
+
+        <!-- Meaning -->
+        <div class="result-block">
+            <div class="block-header">📖 What this means</div>
+            <div class="block-text" id="meaningText"></div>
+        </div>
+
+        <!-- Action -->
+        <div class="result-block">
+            <div class="block-header">🩺 Recommended Action</div>
+            <div class="block-text" id="actionText"></div>
+        </div>
+
+        <!-- Tip -->
+        <div class="tip">💡 Early detection improves plant health and yield.</div>
+
+        <!-- Button -->
+        <div class="text-center">
+            <a href="/" class="btn btn-outline-success mt-4">
+                Check Another Plant
+            </a>
+        </div>
+
     </div>
 </div>
 
 <script>
-const text = `
-🧠 Plant Doctor AI Analysis Complete
+/* ================= CONFIDENCE BAR (SMOOTH & PREMIUM) ================= */
+window.addEventListener("load", () => {
+    const bar = document.getElementById("confidenceFill");
+    if (!bar) return;
 
-🌿 Diagnosis:
-{{ prediction }}
+    const confidence = {{ confidence }} / 100;
 
-📊 Confidence:
-{{ confidence }}%
+    /* start hidden */
+    bar.style.transform = "scaleX(0)";
+    bar.style.transformOrigin = "left";
 
-📖 What this means:
-{{ description }}
+    /* smooth premium motion */
+    bar.style.transition =
+        "transform 2.2s cubic-bezier(0.22, 1.15, 0.36, 1)";
 
-🩺 Recommended Action:
-{{ cure }}
+    /* animate after pause */
+    setTimeout(() => {
+        bar.style.transform = `scaleX(${confidence})`;
+    }, 600);
+});
 
-💡 Tip:
-Early detection improves plant health and yield.
-`;
-
-let i = 0;
-function typeWriter() {
-    if (i < text.length) {
-        document.getElementById("ai-text").innerHTML += text.charAt(i);
-        i++;
-        setTimeout(typeWriter, 18);
+/* ================= HUMAN-LIKE TYPING ================= */
+function typeText(el, text, speed, callback) {
+    let i = 0;
+    function type() {
+        if (i < text.length) {
+            el.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed + Math.random() * 18);
+        } else if (callback) {
+            setTimeout(callback, 300);
+        }
     }
+    type();
 }
-typeWriter();
+
+document.addEventListener("DOMContentLoaded", () => {
+    const diagnosisEl = document.getElementById("diagnosisText");
+    const meaningEl = document.getElementById("meaningText");
+    const actionEl = document.getElementById("actionText");
+
+    setTimeout(() => {
+        typeText(diagnosisEl, "{{ prediction }}", 26, () => {
+            typeText(meaningEl, "{{ description }}", 18, () => {
+                typeText(actionEl, "{{ cure }}", 18);
+            });
+        });
+    }, 500);
+});
+
+/* ================= SAVE TO HISTORY ================= */
+const historyItem = {
+    disease: "{{ prediction }}",
+    confidence: "{{ confidence }}%",
+    image: "{{ image_path }}"
+};
+
+let history = JSON.parse(localStorage.getItem("scanHistory")) || [];
+history.unshift(historyItem);
+history = history.slice(0, 10);
+localStorage.setItem("scanHistory", JSON.stringify(history));
 </script>
+
 
 {% endblock %}
