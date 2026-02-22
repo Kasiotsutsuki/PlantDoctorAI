@@ -1,6 +1,7 @@
 import os
 import secrets
 import numpy as np
+from datetime import datetime, timedelta
 from flask import Flask, request, render_template, send_from_directory
 from werkzeug.utils import secure_filename
 from tensorflow.keras.models import load_model
@@ -10,6 +11,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import redirect, url_for, session, flash
 from flask_bcrypt import Bcrypt
 from authlib.integrations.flask_client import OAuth
+from flask_mail import Mail, Message
+from dotenv import load_dotenv
+load_dotenv()
 
 
 
@@ -28,14 +32,14 @@ def login_required(f):
 
 app = Flask(__name__)
 
-app.secret_key = "super-secret-key"  # change later
+app.secret_key = os.getenv("SECRET_KEY")
 
 oauth = OAuth(app)
 
 google = oauth.register(
     name="google",
-    client_id='301929707247-qotm4s5sdg0cmskmrnhuifpi6u25ns8r.apps.googleusercontent.com',
-    client_secret='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',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={
         "scope": "openid email profile"
@@ -43,19 +47,24 @@ google = oauth.register(
 )
 
 # ===================== AUTH CONFIG =====================
-app.secret_key = "plant_doctor_secret_key"  # change later
-
 # MySQL config
 app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "900251@01Aa"
+app.config["MYSQL_PASSWORD"] = os.getenv("MYSQL_PASSWORD")
 app.config["MYSQL_DB"] = "plant_doctor"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 mysql = MySQL(app)
 bcrypt = Bcrypt(app)
 
-
+# ===================== MAIL CONFIG =====================
+app.config["MAIL_SERVER"]   = "smtp.gmail.com"
+app.config["MAIL_PORT"]     = 587
+app.config["MAIL_USE_TLS"]  = True
+app.config["MAIL_USERNAME"] = "yourgmail@gmail.com"
+app.config["MAIL_PASSWORD"] = "xxxx xxxx xxxx xxxx"
+app.config["MAIL_DEFAULT_SENDER"] = "yourgmail@gmail.com"
+mail = Mail(app)
 
 # ===================== UPLOAD CONFIG =====================
 UPLOAD_FOLDER = "uploads"
@@ -278,7 +287,7 @@ def login():
 
         cur = mysql.connection.cursor()
         cur.execute(
-    "SELECT id, name, email, password_hash FROM users WHERE email = %s",
+    "SELECT id, name, email, password_hash, picture FROM users WHERE email = %s",
     (email,)
 )
 
@@ -289,6 +298,7 @@ def login():
             session["user_id"] = user["id"]
             session["email"] = user["email"]
             session["name"] = user["name"]
+            session["picture"] = user.get("picture", "")
             flash("Logged in successfully", "success")
             return redirect(url_for("index"))
         else:
@@ -322,13 +332,15 @@ def google_callback():
     existing_user = cur.fetchone()
 
     if existing_user:
-        # User already exists — just log them in
+        # User already exists — update picture and log them in
         user_id = existing_user['id']
+        cur.execute("UPDATE users SET picture = %s WHERE id = %s", (picture, user_id))
+        mysql.connection.commit()
     else:
         # New Google user — insert into DB (no password needed)
         cur.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s)",
-            (name, email, '')   # empty password_hash since they use Google
+            "INSERT INTO users (name, email, password_hash, picture) VALUES (%s, %s, %s, %s)",
+            (name, email, '', picture)
         )
         mysql.connection.commit()
         user_id = cur.lastrowid
@@ -496,6 +508,106 @@ def inject_scan_history():
     else:
         history = []
     return dict(scan_history=history)
+
+@app.route("/profile")
+@login_required
+def profile():
+    return render_template("profile.html")
+
+
+# ===================== FORGOT PASSWORD =====================
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id, name, password_hash FROM users WHERE email = %s", (email,))
+        user = cur.fetchone()
+
+        if user:
+            # Block Google-only accounts (no password set)
+            if not user["password_hash"]:
+                flash("This email is linked to a Google account. Please sign in with Google.", "warning")
+                return redirect(url_for("forgot_password"))
+
+            # Generate token
+            token = secrets.token_urlsafe(32)
+            expiry = datetime.now() + timedelta(hours=1)
+
+            cur.execute(
+                "UPDATE users SET reset_token = %s, reset_expiry = %s WHERE id = %s",
+                (token, expiry, user["id"])
+            )
+            mysql.connection.commit()
+            cur.close()
+
+            # Send email
+            reset_url = url_for("reset_password", token=token, _external=True)
+            try:
+                msg = Message(
+                    subject="Reset Your Plant Doctor AI Password",
+                    recipients=[email],
+                    html=f"""
+                    <div style="font-family:Poppins,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f7fbf7;border-radius:14px;">
+                        <h2 style="color:#2e7d32;">🌱 Plant Doctor AI</h2>
+                        <p>Hi {user['name']},</p>
+                        <p>You requested a password reset. Click the button below to set a new password.</p>
+                        <a href="{reset_url}" style="display:inline-block;background:#2e7d32;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:20px 0;">Reset Password</a>
+                        <p style="color:#777;font-size:0.85rem;">This link expires in 1 hour. If you did not request this, ignore this email.</p>
+                    </div>
+                    """
+                )
+                mail.send(msg)
+            except Exception as e:
+                print(f"Mail error: {e}")
+
+        # Always show same message (security — don't reveal if email exists)
+        flash("If that email is registered, a reset link has been sent.", "info")
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT id, reset_expiry FROM users WHERE reset_token = %s",
+        (token,)
+    )
+    user = cur.fetchone()
+
+    if not user or datetime.now() > user["reset_expiry"]:
+        cur.close()
+        flash("Reset link is invalid or has expired.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        password = request.form["password"]
+        confirm  = request.form["confirm_password"]
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.", "warning")
+            return redirect(request.url)
+
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return redirect(request.url)
+
+        hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+        cur.execute(
+            "UPDATE users SET password_hash = %s, reset_token = NULL, reset_expiry = NULL WHERE id = %s",
+            (hashed, user["id"])
+        )
+        mysql.connection.commit()
+        cur.close()
+        flash("Password reset successfully! Please log in.", "success")
+        return redirect(url_for("login"))
+
+    cur.close()
+    return render_template("reset_password.html", token=token)
+
 
 # ===================== RUN (LAST LINE ONLY) =====================
 if __name__ == "__main__":

@@ -23,3 +23,5 @@ Thumbs.db
 
 project imgs and videos/
 *.mp4
+
+.env

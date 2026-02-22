@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-page">
+
+    <!-- ── HERO CARD ── -->
+    <div class="profile-hero-card">
+
+        <!-- Avatar -->
+        <div class="profile-avatar-wrap">
+            {% if session.get("picture") %}
+                <img src="{{ session.get('picture') }}" alt="Profile" class="profile-avatar-img" referrerpolicy="no-referrer">
+            {% else %}
+                <div class="profile-avatar-initial">
+                    {{ session.get("name", "U")[0]|upper }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Name & Email -->
+        <h2 class="profile-name">{{ session.get("name", "User") }}</h2>
+        <p class="profile-email">{{ session.get("email", "") }}</p>
+
+        <!-- Account type badge -->
+        {% if session.get("picture") %}
+            <span class="profile-badge google-badge">🔗 Google Account</span>
+        {% else %}
+            <span class="profile-badge normal-badge">🔒 Email Account</span>
+        {% endif %}
+
+        <!-- Stats row -->
+        <div class="profile-stats">
+            <div class="profile-stat">
+                <span class="stat-num">{{ scan_history | length }}</span>
+                <span class="stat-label">Total Scans</span>
+            </div>
+            <div class="profile-stat-divider"></div>
+            <div class="profile-stat">
+                {% if scan_history %}
+                    <span class="stat-num">{{ scan_history[0].disease.split()[0] }}</span>
+                    <span class="stat-label">Last Scan</span>
+                {% else %}
+                    <span class="stat-num">—</span>
+                    <span class="stat-label">Last Scan</span>
+                {% endif %}
+            </div>
+            <div class="profile-stat-divider"></div>
+            <div class="profile-stat">
+                {% if scan_history %}
+                    {% set healthy_count = scan_history | selectattr("disease", "search", "Healthy") | list | length %}
+                    <span class="stat-num">{{ healthy_count }}</span>
+                {% else %}
+                    <span class="stat-num">0</span>
+                {% endif %}
+                <span class="stat-label">Healthy</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SCAN HISTORY ── -->
+    <div class="profile-section">
+        <h3 class="profile-section-title">📋 Scan History</h3>
+
+        {% if scan_history and scan_history | length > 0 %}
+        <div class="profile-history-grid">
+            {% for scan in scan_history %}
+            <div class="profile-history-card {% if 'Healthy' in scan.disease %}healthy-card{% else %}disease-card{% endif %}">
+                <div class="phc-top">
+                    <div class="phc-icon">
+                        {% if 'Healthy' in scan.disease %}✅{% else %}🔬{% endif %}
+                    </div>
+                    <div class="phc-info">
+                        <div class="phc-disease">{{ scan.disease }}</div>
+                        <div class="phc-time">{{ scan.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                    </div>
+                    <div class="phc-conf {% if scan.confidence >= 80 %}conf-high{% elif scan.confidence >= 50 %}conf-mid{% else %}conf-low{% endif %}">
+                        {{ scan.confidence }}%
+                    </div>
+                </div>
+                <div class="phc-bar">
+                    <div class="phc-bar-fill" style="width: {{ scan.confidence }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="profile-empty">
+            <div class="profile-empty-icon">🌿</div>
+            <p>No scans yet. Upload a leaf image to get started!</p>
+            <a href="/" class="profile-cta-btn">Analyze a Plant</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── ACCOUNT ACTIONS ── -->
+    <div class="profile-section">
+        <h3 class="profile-section-title">⚙️ Account</h3>
+        <div class="profile-actions">
+            <a href="/" class="profile-action-btn primary-btn">🌿 New Scan</a>
+            <a href="/logout" class="profile-action-btn danger-btn">🚪 Logout</a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+/* ── PAGE LAYOUT ── */
+.profile-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 110px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ── HERO CARD ── */
+.profile-hero-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 30px 32px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    transition: background var(--transition);
+}
+
+.profile-avatar-wrap {
+    margin: 0 auto 16px;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 3px solid var(--green-light);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-initial {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
+    color: #fff;
+    font-size: 2.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+.profile-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+}
+
+.profile-email {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+}
+
+.profile-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 28px;
+}
+
+.google-badge {
+    background: rgba(66, 133, 244, 0.12);
+    color: #4285f4;
+    border: 1px solid rgba(66, 133, 244, 0.3);
+}
+
+.normal-badge {
+    background: var(--tip-bg);
+    color: var(--green-mid);
+    border: 1px solid var(--section-border);
+}
+
+/* ── STATS ── */
+.profile-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: var(--tip-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: background var(--transition);
+}
+
+.profile-stat {
+    flex: 1;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-stat-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+.stat-num {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--green-mid);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── SECTION ── */
+.profile-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 28px 24px;
+    box-shadow: var(--card-shadow);
+    transition: background var(--transition);
+}
+
+.profile-section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 20px;
+}
+
+/* ── HISTORY GRID ── */
+.profile-history-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-history-card {
+    background: var(--history-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+}
+
+.profile-history-card:hover {
+    transform: translateX(4px);
+    background: var(--history-hover);
+}
+
+.healthy-card { border-left: 3px solid #4caf50; }
+.disease-card  { border-left: 3px solid #ef9a9a; }
+
+.phc-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.phc-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.phc-info { flex: 1; min-width: 0; }
+
+.phc-disease {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.phc-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.phc-conf {
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.conf-high { color: #4caf50; }
+.conf-mid  { color: #ffa726; }
+.conf-low  { color: #ef5350; }
+
+.phc-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 999px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.phc-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--green-mid), var(--green-light));
+    border-radius: 999px;
+    transition: width 0.6s ease;
+}
+
+/* ── EMPTY STATE ── */
+.profile-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.profile-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.profile-empty p { margin-bottom: 20px; font-size: 0.9rem; }
+
+.profile-cta-btn {
+    display: inline-block;
+    background: var(--green-mid);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 12px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.profile-cta-btn:hover {
+    background: var(--green-dark);
+    transform: translateY(-2px);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ── ACTIONS ── */
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.profile-action-btn {
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.primary-btn {
+    background: var(--green-mid);
+    color: #fff;
+    border: 1px solid transparent;
+}
+
+.primary-btn:hover {
+    background: var(--green-dark);
+    color: #fff;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.danger-btn {
+    background: transparent;
+    color: #ef5350;
+    border: 1px solid #ef5350;
+}
+
+.danger-btn:hover {
+    background: rgba(239, 83, 80, 0.08);
+    color: #ef5350;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+    .profile-page { padding: 100px 14px 50px; }
+    .profile-hero-card { padding: 30px 18px 24px; }
+    .stat-num { font-size: 1.1rem; }
+}
+</style>
+{% endblock %}
