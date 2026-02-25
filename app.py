@@ -74,7 +74,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ===================== LOAD MODEL =====================
-model = load_model("model_v2_final.h5", compile=False)
+import tensorflow as tf
+tf.config.set_visible_devices([], 'GPU')
+gpus = tf.config.experimental.list_physical_devices('GPU')
+
+import gc
+model = tf.keras.models.load_model("model_v2.h5", compile=False)
+gc.collect()
 print("✅ Model loaded. Visit http://127.0.0.1:5000/")
 
 # ===================== CLASS NAMES (38 classes) =====================
