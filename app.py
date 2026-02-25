@@ -74,7 +74,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ===================== LOAD MODEL =====================
-model = load_model("model_v2.h5", compile=False)
+model = load_model("model_v2.keras", compile=False)
 print("✅ Model loaded. Visit http://127.0.0.1:5000/")
 
 # ===================== CLASS NAMES (38 classes) =====================
