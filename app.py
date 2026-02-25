@@ -1,6 +1,8 @@
 import os
 import secrets
 import numpy as np
+import tensorflow as tf
+tf.keras.backend.clear_session()
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, send_from_directory
 from werkzeug.utils import secure_filename
@@ -72,7 +74,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ===================== LOAD MODEL =====================
-model = load_model("model_v2.h5")
+model = load_model("model_v2.h5", compile=False)
 print("✅ Model loaded. Visit http://127.0.0.1:5000/")
 
 # ===================== CLASS NAMES (38 classes) =====================
