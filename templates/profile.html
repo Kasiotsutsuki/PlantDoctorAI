@@ -47,7 +47,7 @@
             <div class="profile-stat-divider"></div>
             <div class="profile-stat">
                 {% if scan_history %}
-                    {% set healthy_count = scan_history | selectattr("disease", "search", "Healthy") | list | length %}
+                
                     <span class="stat-num">{{ healthy_count }}</span>
                 {% else %}
                     <span class="stat-num">0</span>

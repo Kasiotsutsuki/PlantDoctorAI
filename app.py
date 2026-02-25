@@ -48,10 +48,10 @@ google = oauth.register(
 
 # ===================== AUTH CONFIG =====================
 # MySQL config
-app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "root"
+app.config["MYSQL_HOST"] = os.getenv("MYSQL_HOST")
+app.config["MYSQL_USER"] = os.getenv("MYSQL_USER")
 app.config["MYSQL_PASSWORD"] = os.getenv("MYSQL_PASSWORD")
-app.config["MYSQL_DB"] = "plant_doctor"
+app.config["MYSQL_DB"] = os.getenv("MYSQL_DB")
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 mysql = MySQL(app)
@@ -61,9 +61,9 @@ bcrypt = Bcrypt(app)
 app.config["MAIL_SERVER"]   = "smtp.gmail.com"
 app.config["MAIL_PORT"]     = 587
 app.config["MAIL_USE_TLS"]  = True
-app.config["MAIL_USERNAME"] = "yourgmail@gmail.com"
-app.config["MAIL_PASSWORD"] = "xxxx xxxx xxxx xxxx"
-app.config["MAIL_DEFAULT_SENDER"] = "yourgmail@gmail.com"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
 mail = Mail(app)
 
 # ===================== UPLOAD CONFIG =====================
@@ -512,7 +512,9 @@ def inject_scan_history():
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template("profile.html")
+    history = get_user_scan_history(session["user_id"], limit=50)
+    healthy_count = sum(1 for s in history if "Healthy" in s["disease"])
+    return render_template("profile.html", healthy_count=healthy_count)
 
 
 # ===================== FORGOT PASSWORD =====================

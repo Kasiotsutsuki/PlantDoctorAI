@@ -58,7 +58,9 @@
                 {% endif %}
                 <div class="nav-dropdown" id="avatarMenu">
                     <div class="dropdown-name">{{ session.name }}</div>
-                    <div class="dropdown-email">{{ session.email }}</div>
+                    <div class="dropdown-email" style="font-size:0.78rem; word-break:break-all;">{{ session.email }}</div>
+                    <hr>
+                    <a href="/profile" class="dropdown-link" style="color: var(--green-mid); margin-bottom: 6px; display:block;">👤 Profile</a>
                     <hr>
                     <a href="/logout" class="dropdown-link">Logout</a>
                 </div>
