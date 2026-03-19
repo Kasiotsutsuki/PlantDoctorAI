@@ -1,102 +1,192 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set disease_meta = {
+    "Apple Scab":                   {"category": "Fungal",     "severity": "Moderate", "icon": "🍎"},
+    "Apple Black Rot":              {"category": "Fungal",     "severity": "High",     "icon": "🍎"},
+    "Apple Cedar Rust":             {"category": "Fungal",     "severity": "Moderate", "icon": "🍎"},
+    "Apple Healthy":                {"category": "Healthy",    "severity": "None",     "icon": "🍎"},
+    "Blueberry Healthy":            {"category": "Healthy",    "severity": "None",     "icon": "🫐"},
+    "Cherry Powdery Mildew":        {"category": "Fungal",     "severity": "Moderate", "icon": "🍒"},
+    "Cherry Healthy":               {"category": "Healthy",    "severity": "None",     "icon": "🍒"},
+    "Corn Gray Leaf Spot":          {"category": "Fungal",     "severity": "High",     "icon": "🌽"},
+    "Corn Common Rust":             {"category": "Fungal",     "severity": "Moderate", "icon": "🌽"},
+    "Corn Northern Leaf Blight":    {"category": "Fungal",     "severity": "High",     "icon": "🌽"},
+    "Corn Healthy":                 {"category": "Healthy",    "severity": "None",     "icon": "🌽"},
+    "Grape Black Rot":              {"category": "Fungal",     "severity": "High",     "icon": "🍇"},
+    "Grape Esca Black Measles":     {"category": "Fungal",     "severity": "Critical", "icon": "🍇"},
+    "Grape Leaf Blight":            {"category": "Fungal",     "severity": "Moderate", "icon": "🍇"},
+    "Grape Healthy":                {"category": "Healthy",    "severity": "None",     "icon": "🍇"},
+    "Orange Huanglongbing":         {"category": "Bacterial",  "severity": "Critical", "icon": "🍊"},
+    "Peach Bacterial Spot":         {"category": "Bacterial",  "severity": "Moderate", "icon": "🍑"},
+    "Peach Healthy":                {"category": "Healthy",    "severity": "None",     "icon": "🍑"},
+    "Bell Pepper Bacterial Spot":   {"category": "Bacterial",  "severity": "Moderate", "icon": "🫑"},
+    "Bell Pepper Healthy":          {"category": "Healthy",    "severity": "None",     "icon": "🫑"},
+    "Potato Early Blight":          {"category": "Fungal",     "severity": "Moderate", "icon": "🥔"},
+    "Potato Late Blight":           {"category": "Fungal",     "severity": "Critical", "icon": "🥔"},
+    "Potato Healthy":               {"category": "Healthy",    "severity": "None",     "icon": "🥔"},
+    "Raspberry Healthy":            {"category": "Healthy",    "severity": "None",     "icon": "🍓"},
+    "Soybean Healthy":              {"category": "Healthy",    "severity": "None",     "icon": "🌱"},
+    "Squash Powdery Mildew":        {"category": "Fungal",     "severity": "Low",      "icon": "🎃"},
+    "Strawberry Leaf Scorch":       {"category": "Fungal",     "severity": "Moderate", "icon": "🍓"},
+    "Strawberry Healthy":           {"category": "Healthy",    "severity": "None",     "icon": "🍓"},
+    "Tomato Bacterial Spot":        {"category": "Bacterial",  "severity": "Moderate", "icon": "🍅"},
+    "Tomato Early Blight":          {"category": "Fungal",     "severity": "Moderate", "icon": "🍅"},
+    "Tomato Late Blight":           {"category": "Fungal",     "severity": "Critical", "icon": "🍅"},
+    "Tomato Leaf Mold":             {"category": "Fungal",     "severity": "Moderate", "icon": "🍅"},
+    "Tomato Septoria Leaf Spot":    {"category": "Fungal",     "severity": "Moderate", "icon": "🍅"},
+    "Tomato Spider Mites":          {"category": "Pest",       "severity": "Moderate", "icon": "🍅"},
+    "Tomato Target Spot":           {"category": "Fungal",     "severity": "Moderate", "icon": "🍅"},
+    "Tomato Yellow Leaf Curl Virus":{"category": "Viral",      "severity": "High",     "icon": "🍅"},
+    "Tomato Mosaic Virus":          {"category": "Viral",      "severity": "High",     "icon": "🍅"},
+    "Tomato Healthy":               {"category": "Healthy",    "severity": "None",     "icon": "🍅"},
+} %}
+
+{% set meta = disease_meta.get(prediction, {"category": "Unknown", "severity": "Unknown", "icon": "🌿"}) %}
+
 <div class="container d-flex justify-content-center">
     <div class="result-card">
 
-        <!-- Title -->
         <h3 class="result-title">🌿 Plant Doctor AI Diagnosis</h3>
-
-        <!-- Image -->
         <img src="{{ image_path }}" class="result-img" alt="Leaf image">
 
-        <!-- Status -->
-        <p class="status-text">🧠 Analysis Complete</p>
+        <!-- Status + Badges -->
+        <div class="result-meta-row">
+            <p class="status-text mb-0">🧠 Analysis Complete</p>
+            <div class="result-badges">
+                <span class="meta-badge badge-category badge-{{ meta.category | lower }}">
+                    {{ meta.icon }} {{ meta.category }}
+                </span>
+                <span class="meta-badge badge-severity severity-{{ meta.severity | lower }}">
+                    {% if meta.severity == 'None' %}✅
+                    {% elif meta.severity == 'Low' %}🟡
+                    {% elif meta.severity == 'Moderate' %}🟠
+                    {% elif meta.severity == 'High' %}🔴
+                    {% elif meta.severity == 'Critical' %}🚨
+                    {% else %}⚪{% endif %}
+                    {{ meta.severity }} Severity
+                </span>
+            </div>
+        </div>
 
-<!-- Diagnosis -->
-<div class="result-block">
-    <div class="block-header">🌿 Diagnosis</div>
-    <div class="block-text" id="diagnosisText"></div>
-</div>
+        {% if low_confidence %}
+        <div class="low-conf-banner">
+            <span class="low-conf-icon">⚠️</span>
+            <div>
+                <strong>Image may not be clear enough</strong><br>
+                <small>Confidence is {{ confidence }}% — for better results, try a clearer, well-lit, close-up photo of the leaf.</small>
+            </div>
+        </div>
+        {% endif %}
 
-<!-- Confidence -->
-<div class="result-block">
-    <div class="block-header">📊 Confidence</div>
-    <div class="block-value">{{ confidence }}%</div>
+        <div class="result-block">
+            <div class="block-header">🌿 Diagnosis</div>
+            <div class="block-text" id="diagnosisText"></div>
+        </div>
 
-    <div class="confidence-bar">
-        <div class="confidence-fill" id="confidenceFill"></div>
-    </div>
-</div>
+        <div class="result-block">
+            <div class="block-header">📊 Confidence</div>
+            <div class="block-value">{{ confidence }}%</div>
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill"></div>
+            </div>
+        </div>
 
-
-        <!-- Meaning -->
         <div class="result-block">
             <div class="block-header">📖 What this means</div>
             <div class="block-text" id="meaningText"></div>
         </div>
 
-        <!-- Action -->
         <div class="result-block">
             <div class="block-header">🩺 Recommended Action</div>
             <div class="block-text" id="actionText"></div>
         </div>
 
-        <!-- Tip -->
         <div class="tip">💡 Early detection improves plant health and yield.</div>
 
-        <!-- Button -->
-        <div class="text-center">
-            <a href="/" class="btn btn-outline-success mt-4">
-                Check Another Plant
+        <div class="result-actions">
+            <a href="/learn#card-{{ prediction.lower().replace(' ', '-') }}" class="result-btn result-btn-primary">
+                📖 View in Disease Library
+            </a>
+            <a href="/" class="result-btn result-btn-secondary">
+                🌿 Check Another Plant
             </a>
         </div>
 
     </div>
 </div>
 
+<style>
+.result-meta-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.result-badges { display:flex; gap:8px; flex-wrap:wrap; }
+
+.meta-badge { font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; font-family:'Poppins',sans-serif; }
+
+.badge-fungal    { background:rgba(245,158,11,0.15); color:#d97706; border:1px solid rgba(245,158,11,0.3); }
+.badge-bacterial { background:rgba(239,68,68,0.12);  color:#dc2626; border:1px solid rgba(239,68,68,0.3); }
+.badge-viral     { background:rgba(139,92,246,0.12); color:#7c3aed; border:1px solid rgba(139,92,246,0.3); }
+.badge-pest      { background:rgba(249,115,22,0.12); color:#ea580c; border:1px solid rgba(249,115,22,0.3); }
+.badge-healthy   { background:rgba(34,197,94,0.12);  color:#16a34a; border:1px solid rgba(34,197,94,0.3); }
+.badge-unknown   { background:var(--tip-bg); color:var(--text-muted); border:1px solid var(--border); }
+
+body.dark-mode .badge-fungal    { color:#fbbf24; background:rgba(245,158,11,0.1); }
+body.dark-mode .badge-bacterial { color:#f87171; background:rgba(239,68,68,0.1); }
+body.dark-mode .badge-viral     { color:#a78bfa; background:rgba(139,92,246,0.1); }
+body.dark-mode .badge-pest      { color:#fb923c; background:rgba(249,115,22,0.1); }
+body.dark-mode .badge-healthy   { color:#4ade80; background:rgba(34,197,94,0.1); }
+
+.severity-none     { background:rgba(34,197,94,0.12);  color:#16a34a; border:1px solid rgba(34,197,94,0.3); }
+.severity-low      { background:rgba(234,179,8,0.12);  color:#ca8a04; border:1px solid rgba(234,179,8,0.3); }
+.severity-moderate { background:rgba(249,115,22,0.12); color:#ea580c; border:1px solid rgba(249,115,22,0.3); }
+.severity-high     { background:rgba(239,68,68,0.12);  color:#dc2626; border:1px solid rgba(239,68,68,0.3); }
+.severity-critical { background:rgba(127,29,29,0.15);  color:#ef4444; border:1px solid rgba(239,68,68,0.5); }
+.severity-unknown  { background:var(--tip-bg); color:var(--text-muted); border:1px solid var(--border); }
+
+body.dark-mode .severity-none     { color:#4ade80; }
+body.dark-mode .severity-low      { color:#fde047; }
+body.dark-mode .severity-moderate { color:#fb923c; }
+body.dark-mode .severity-high     { color:#f87171; }
+body.dark-mode .severity-critical { color:#ef4444; background:rgba(239,68,68,0.15); }
+
+.low-conf-banner { display:flex; align-items:flex-start; gap:12px; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.4); border-radius:12px; padding:14px 16px; margin-bottom:20px; }
+body.dark-mode .low-conf-banner { background:rgba(234,179,8,0.08); border-color:rgba(234,179,8,0.3); }
+.low-conf-icon { font-size:1.4rem; flex-shrink:0; margin-top:2px; }
+.low-conf-banner strong { font-size:0.92rem; color:#b45309; }
+body.dark-mode .low-conf-banner strong { color:#fbbf24; }
+.low-conf-banner small { font-size:0.82rem; color:var(--text-muted); line-height:1.5; }
+
+.result-actions { display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; }
+.result-btn { flex:1; min-width:160px; padding:14px 20px; border-radius:12px; font-size:0.9rem; font-weight:600; text-align:center; text-decoration:none; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Poppins',sans-serif; }
+.result-btn-primary { background:linear-gradient(135deg,var(--green-mid),var(--green-dark)); color:#ffffff !important; box-shadow:0 4px 14px rgba(46,125,50,0.35); }
+.result-btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(46,125,50,0.45); text-decoration:none; color:#ffffff !important; }
+.result-btn-secondary { background:transparent; color:var(--green-mid) !important; border:1.5px solid var(--green-mid); }
+.result-btn-secondary:hover { background:var(--tip-bg); transform:translateY(-2px); text-decoration:none; color:var(--green-mid) !important; }
+</style>
+
 <script>
-/* ================= CONFIDENCE BAR (SMOOTH & PREMIUM) ================= */
 window.addEventListener("load", () => {
     const bar = document.getElementById("confidenceFill");
     if (!bar) return;
-
     const confidence = {{ confidence }} / 100;
-
-    /* start hidden */
     bar.style.transform = "scaleX(0)";
     bar.style.transformOrigin = "left";
-
-    /* smooth premium motion */
-    bar.style.transition =
-        "transform 2.2s cubic-bezier(0.22, 1.15, 0.36, 1)";
-
-    /* animate after pause */
-    setTimeout(() => {
-        bar.style.transform = `scaleX(${confidence})`;
-    }, 600);
+    bar.style.transition = "transform 2.2s cubic-bezier(0.22, 1.15, 0.36, 1)";
+    setTimeout(() => { bar.style.transform = `scaleX(${confidence})`; }, 600);
 });
 
-/* ================= HUMAN-LIKE TYPING ================= */
 function typeText(el, text, speed, callback) {
     let i = 0;
     function type() {
-        if (i < text.length) {
-            el.innerHTML += text.charAt(i);
-            i++;
-            setTimeout(type, speed + Math.random() * 18);
-        } else if (callback) {
-            setTimeout(callback, 300);
-        }
+        if (i < text.length) { el.innerHTML += text.charAt(i); i++; setTimeout(type, speed + Math.random() * 18); }
+        else if (callback) { setTimeout(callback, 300); }
     }
     type();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const diagnosisEl = document.getElementById("diagnosisText");
-    const meaningEl = document.getElementById("meaningText");
-    const actionEl = document.getElementById("actionText");
-
+    const meaningEl   = document.getElementById("meaningText");
+    const actionEl    = document.getElementById("actionText");
     setTimeout(() => {
         typeText(diagnosisEl, "{{ prediction }}", 26, () => {
             typeText(meaningEl, "{{ description }}", 18, () => {
@@ -106,18 +196,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 500);
 });
 
-/* ================= SAVE TO HISTORY ================= */
-const historyItem = {
-    disease: "{{ prediction }}",
-    confidence: "{{ confidence }}%",
-    image: "{{ image_path }}"
-};
-
+const historyItem = { disease: "{{ prediction }}", confidence: "{{ confidence }}%", image: "{{ image_path }}" };
 let history = JSON.parse(localStorage.getItem("scanHistory")) || [];
-history.unshift(historyItem);
-history = history.slice(0, 10);
+history.unshift(historyItem); history = history.slice(0, 10);
 localStorage.setItem("scanHistory", JSON.stringify(history));
 </script>
-
 
 {% endblock %}

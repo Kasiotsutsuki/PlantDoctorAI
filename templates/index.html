@@ -1,59 +1,534 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<!-- ══════════ LOADING OVERLAY ══════════ -->
+<div id="loading-overlay" style="display:none;">
+    <div class="loading-card">
+        <div class="loading-plant">
+            <div class="leaf leaf-1">🌿</div>
+            <div class="leaf leaf-2">🌱</div>
+            <div class="leaf leaf-3">🍃</div>
+        </div>
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring ring-2"></div>
+        </div>
+        <div class="loading-title">Analyzing your plant...</div>
+        <div class="loading-steps">
+            <div class="loading-step active" id="step1">🔍 Processing image</div>
+            <div class="loading-step" id="step2">🧠 Running AI model</div>
+            <div class="loading-step" id="step3">📊 Generating diagnosis</div>
+        </div>
+        <div class="loading-bar-wrap">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+    </div>
+</div>
+
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="card upload-card text-center">
 
-        <!-- Title -->
-        <h3 class="diagnosis-title mb-3">
-    🌿 Plant Doctor AI Diagnosis
-</h3>
+        <h3 class="diagnosis-title mb-2">🌿 Plant Doctor AI Diagnosis</h3>
+        <p class="subtitle mb-4">Upload a clear leaf image or use your camera to diagnose plant disease</p>
 
-        <p class="subtitle mb-4">
-            Upload a clear leaf image and let AI diagnose the disease
-        </p>
+        <div class="capture-tabs mb-4">
+            <button type="button" class="capture-tab active" id="tab-upload" onclick="switchTab('upload')">📁 Upload Image</button>
+            <button type="button" class="capture-tab" id="tab-camera" onclick="switchTab('camera')">📷 Use Camera</button>
+        </div>
 
-        <!-- Upload Form -->
-        <form action="/predict" method="post" enctype="multipart/form-data">
+        <div id="upload-panel">
+            <form action="/predict" method="post" enctype="multipart/form-data" id="upload-form">
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" name="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)">
+                    <span class="drop-icon">🌿</span>
+                    <p class="drop-text">Drop your leaf photo here</p>
+                    <p class="drop-sub">or click to browse • JPG, PNG supported</p>
+                </div>
+                <div id="upload-preview-wrap" style="display:none; position:relative; margin-bottom:12px;">
+                    <img id="upload-preview-img" class="preview-img" alt="Preview" style="display:block;">
+                    <button type="button" class="preview-remove-btn" onclick="clearUpload()">✕ Remove</button>
+                </div>
+                <button type="submit" class="btn btn-success mt-3 px-5 py-2" id="upload-submit-btn" disabled>🔍 Analyze Plant</button>
+            </form>
+        </div>
 
-            <!-- File Input -->
-            <input
-                type="file"
-                name="file"
-                class="form-control mb-3"
-                accept="image/*"
-                onchange="previewImage(event)"
-                required
-            >
+        <div id="camera-panel" style="display:none;">
+            <form action="/predict" method="post" enctype="multipart/form-data" id="camera-form">
+                <input type="hidden" name="webcam_image" id="webcam-image-data">
+                <div class="webcam-viewport" id="webcam-viewport">
+                    <video id="webcam-video" autoplay playsinline muted style="display:none;"></video>
+                    <img id="cam-preview-img" class="preview-img" style="display:none;" alt="Captured">
+                    <div class="cam-placeholder" id="cam-placeholder">
+                        <span style="font-size:2.5rem;">📷</span>
+                        <p>Camera not started</p>
+                        <button type="button" class="btn btn-success px-4 py-2 mt-2" onclick="startCamera()">Start Camera</button>
+                    </div>
+                    <div class="scan-frame" id="scan-frame"><div class="scan-line"></div></div>
+                </div>
+                <div class="cam-controls" id="cam-controls" style="display:none;">
+                    <button type="button" class="cam-btn-secondary" onclick="flipCamera()" title="Flip">🔄</button>
+                    <button type="button" class="cam-btn-capture" onclick="capturePhoto()" title="Capture">📸</button>
+                    <button type="button" class="cam-btn-secondary" onclick="stopCamera()" title="Stop">⏹</button>
+                </div>
+                <div id="retake-wrap" style="display:none; margin-top:10px;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" onclick="retakePhoto()">↺ Retake Photo</button>
+                </div>
+                <canvas id="capture-canvas" style="display:none;"></canvas>
+                <button type="submit" class="btn btn-success mt-3 px-5 py-2" id="camera-submit-btn" disabled>🔍 Analyze Plant</button>
+            </form>
+        </div>
 
-            <!-- Image Preview (HIDDEN INITIALLY) -->
-            <img
-                id="preview"
-                class="preview-img"
-                alt="Leaf Preview"
-                style="display: none;"
-            >
+        <small class="text-muted d-block mt-3">Best results with clear, well-lit leaf images • Supported: JPG, PNG</small>
+    </div>
+</div>
 
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-success mt-4 px-5 py-2">
-                Analyze Plant
-            </button>
+<!-- ══════════ HOW IT WORKS ══════════ -->
+<div class="how-it-works">
+    <div class="hiw-label">Simple Process</div>
+    <h2 class="hiw-title">How it works</h2>
+    <p class="hiw-subtitle">Three steps to diagnose your plant in seconds</p>
 
-        </form>
+    <div class="hiw-steps">
 
-        <!-- Helper Text -->
-        <small class="text-muted d-block mt-3">
-            Supported formats: JPG, PNG • Best results with clear leaf images
-        </small>
+        <div class="hiw-step">
+            <div class="hiw-step-icon">📸</div>
+            <div class="hiw-step-num">01</div>
+            <div class="hiw-step-title">Upload or Capture</div>
+            <div class="hiw-step-desc">Take a clear photo of the affected leaf or upload an existing image from your device.</div>
+        </div>
+
+        <div class="hiw-connector">→</div>
+
+        <div class="hiw-step">
+            <div class="hiw-step-icon">🧠</div>
+            <div class="hiw-step-num">02</div>
+            <div class="hiw-step-title">AI Analysis</div>
+            <div class="hiw-step-desc">Our MobileNetV2 model trained on 87,000+ images analyzes your leaf across 38 disease classes.</div>
+        </div>
+
+        <div class="hiw-connector">→</div>
+
+        <div class="hiw-step">
+            <div class="hiw-step-icon">💊</div>
+            <div class="hiw-step-num">03</div>
+            <div class="hiw-step-title">Get Diagnosis</div>
+            <div class="hiw-step-desc">Receive a detailed diagnosis with disease name, confidence score, and recommended treatment.</div>
+        </div>
 
     </div>
 </div>
 
-<script>
-function previewImage(event) {
-    const img = document.getElementById("preview");
-    img.src = URL.createObjectURL(event.target.files[0]);
-    img.style.display = "block";
+<!-- ══════════ TIPS ══════════ -->
+<div class="tips-section">
+    <div class="hiw-label">Best Practices</div>
+    <h2 class="hiw-title">Tips for better results</h2>
+
+    <div class="tips-grid">
+        <div class="tip-card">
+            <div class="tip-icon">☀️</div>
+            <div class="tip-content">
+                <div class="tip-title">Good lighting</div>
+                <div class="tip-desc">Natural daylight gives the best results. Avoid harsh shadows or direct flash.</div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">🔍</div>
+            <div class="tip-content">
+                <div class="tip-title">Close-up shot</div>
+                <div class="tip-desc">Fill the frame with the leaf. The disease patterns need to be clearly visible.</div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">🍃</div>
+            <div class="tip-content">
+                <div class="tip-title">Single leaf</div>
+                <div class="tip-desc">Focus on one leaf at a time for the most accurate diagnosis possible.</div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">📐</div>
+            <div class="tip-content">
+                <div class="tip-title">Flat angle</div>
+                <div class="tip-desc">Photograph the leaf flat and straight on. Avoid extreme angles or curled leaves.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ STATS BANNER ══════════ -->
+<div class="stats-banner">
+    <div class="stats-banner-item">
+        <span class="stats-banner-num">87K+</span>
+        <span class="stats-banner-label">Training Images</span>
+    </div>
+    <div class="stats-banner-divider"></div>
+    <div class="stats-banner-item">
+        <span class="stats-banner-num">38</span>
+        <span class="stats-banner-label">Disease Classes</span>
+    </div>
+    <div class="stats-banner-divider"></div>
+    <div class="stats-banner-item">
+        <span class="stats-banner-num">94.9%</span>
+        <span class="stats-banner-label">Model Accuracy</span>
+    </div>
+    <div class="stats-banner-divider"></div>
+    <div class="stats-banner-item">
+        <span class="stats-banner-num">14</span>
+        <span class="stats-banner-label">Plant Species</span>
+    </div>
+</div>
+
+<style>
+/* ── Shared ─────────────────────────────── */
+.hiw-label {
+    font-size:0.7rem; font-weight:600; letter-spacing:0.22em;
+    text-transform:uppercase; color:var(--green-mid); margin-bottom:10px; text-align:center;
 }
+.hiw-title {
+    font-family:'Poppins',sans-serif; font-size:clamp(1.6rem,3vw,2.2rem);
+    font-weight:700; color:var(--text); text-align:center; margin-bottom:10px;
+}
+.hiw-subtitle { color:var(--text-muted); text-align:center; font-size:0.95rem; margin-bottom:0; }
+
+/* ── How it works ───────────────────────── */
+.how-it-works {
+    max-width:860px; margin:0 auto; padding:70px 24px 60px;
+}
+
+.hiw-steps {
+    display:flex; align-items:flex-start; justify-content:center;
+    gap:16px; margin-top:48px; flex-wrap:wrap;
+}
+
+.hiw-step {
+    flex:1; min-width:200px; max-width:240px;
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:18px; padding:28px 22px; text-align:center;
+    box-shadow:var(--card-shadow); transition:transform 0.2s ease, box-shadow 0.2s ease;
+    position:relative;
+}
+
+.hiw-step:hover {
+    transform:translateY(-4px);
+    box-shadow:0 12px 32px rgba(0,0,0,0.15);
+}
+
+.hiw-step-icon { font-size:2.2rem; margin-bottom:10px; display:block; }
+
+.hiw-step-num {
+    font-family:'Poppins',sans-serif; font-size:0.7rem; font-weight:700;
+    letter-spacing:0.1em; color:var(--green-mid); margin-bottom:8px;
+    background:var(--tip-bg); border:1px solid var(--section-border);
+    display:inline-block; padding:3px 10px; border-radius:999px;
+}
+
+.hiw-step-title {
+    font-family:'Poppins',sans-serif; font-size:1rem; font-weight:600;
+    color:var(--text); margin-bottom:8px;
+}
+
+.hiw-step-desc { font-size:0.82rem; color:var(--text-muted); line-height:1.6; }
+
+.hiw-connector {
+    font-size:1.5rem; color:var(--green-mid); opacity:0.4;
+    align-self:center; margin-top:0; flex-shrink:0;
+}
+
+@media(max-width:640px) { .hiw-connector { display:none; } }
+
+/* ── Tips ───────────────────────────────── */
+.tips-section {
+    max-width:860px; margin:0 auto; padding:0 24px 70px;
+}
+
+.tips-grid {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px; margin-top:36px;
+}
+
+@media(max-width:560px) { .tips-grid { grid-template-columns:1fr; } }
+
+.tip-card {
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:14px; padding:18px 16px;
+    display:flex; gap:14px; align-items:flex-start;
+    transition:transform 0.2s ease, border-color 0.2s ease;
+}
+
+.tip-card:hover {
+    transform:translateY(-2px);
+    border-color:var(--green-mid);
+}
+
+.tip-icon { font-size:1.6rem; flex-shrink:0; margin-top:2px; }
+
+.tip-title {
+    font-family:'Poppins',sans-serif; font-size:0.88rem;
+    font-weight:600; color:var(--text); margin-bottom:4px;
+}
+
+.tip-desc { font-size:0.8rem; color:var(--text-muted); line-height:1.55; }
+
+/* ── Stats banner ───────────────────────── */
+.stats-banner {
+    max-width:860px; margin:0 auto 80px;
+    padding:0 24px;
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:18px; display:flex; align-items:center;
+    overflow:hidden;
+}
+
+.stats-banner-item {
+    flex:1; padding:28px 16px; text-align:center;
+    display:flex; flex-direction:column; gap:4px;
+}
+
+.stats-banner-divider { width:1px; height:44px; background:var(--border); flex-shrink:0; }
+
+.stats-banner-num {
+    font-family:'Poppins',sans-serif; font-size:1.8rem;
+    font-weight:700; color:var(--green-mid); line-height:1;
+}
+
+.stats-banner-label { font-size:0.72rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em; }
+
+@media(max-width:560px) {
+    .stats-banner { flex-wrap:wrap; }
+    .stats-banner-item { min-width:50%; }
+    .stats-banner-divider { display:none; }
+    .stats-banner-num { font-size:1.4rem; }
+}
+
+#loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.loading-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity:0; }
+    to { transform: translateY(0); opacity:1; }
+}
+
+.loading-plant { position:relative; height:60px; margin-bottom:1rem; }
+.leaf { position:absolute; font-size:1.8rem; animation: floatLeaf 2s ease-in-out infinite; }
+.leaf-1 { left:25%; animation-delay:0s; }
+.leaf-2 { left:50%; transform:translateX(-50%); font-size:2.2rem; animation: floatLeaf2 2s ease-in-out infinite; animation-delay:0.3s; }
+.leaf-3 { right:25%; animation-delay:0.6s; }
+@keyframes floatLeaf {
+    0%,100% { transform:translateY(0) rotate(-5deg); }
+    50% { transform:translateY(-12px) rotate(5deg); }
+}
+@keyframes floatLeaf2 {
+    0%,100% { transform:translateX(-50%) translateY(0); }
+    50% { transform:translateX(-50%) translateY(-14px); }
+}
+
+.loading-spinner { position:relative; width:60px; height:60px; margin:0 auto 1.25rem; }
+.spinner-ring {
+    position:absolute; inset:0; border-radius:50%;
+    border:3px solid transparent;
+    border-top-color: var(--green-mid);
+    animation: spin 1s linear infinite;
+}
+.ring-2 { inset:8px; border-top-color: var(--green-light); animation: spin 0.7s linear infinite reverse; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.loading-title { font-family:'Poppins',sans-serif; font-size:1.1rem; font-weight:600; color:var(--text); margin-bottom:1.25rem; }
+
+.loading-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:1.25rem; text-align:left; }
+.loading-step { font-size:0.82rem; color:var(--text-muted); padding:6px 12px; border-radius:8px; transition:all 0.4s ease; }
+.loading-step.active { color:var(--green-mid); background:var(--tip-bg); font-weight:600; }
+.loading-step.done { color:var(--green-light); opacity:0.5; }
+
+.loading-bar-wrap { background:var(--border); border-radius:999px; height:6px; overflow:hidden; }
+.loading-bar { height:100%; width:0%; background:linear-gradient(90deg,var(--green-mid),var(--green-light)); border-radius:999px; transition:width 0.6s ease; }
+
+.capture-tabs { display:flex; background:var(--tip-bg); border:1px solid var(--border); border-radius:12px; padding:4px; gap:4px; }
+.capture-tab { flex:1; padding:0.55rem 1rem; border:none; border-radius:9px; background:transparent; color:var(--text-muted); font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s ease; font-family:'Poppins',sans-serif; }
+.capture-tab.active { background:var(--green-mid); color:#fff; box-shadow:0 2px 8px rgba(46,125,50,0.35); }
+.capture-tab:hover:not(.active) { color:var(--text); background:var(--border); }
+
+.drop-zone { border:2px dashed var(--border); border-radius:14px; padding:2rem 1.5rem; text-align:center; cursor:pointer; transition:all 0.25s ease; position:relative; overflow:hidden; margin-bottom:12px; background:var(--input-bg); }
+.drop-zone:hover, .drop-zone.drag-over { border-color:var(--green-mid); background:var(--tip-bg); }
+.drop-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.drop-icon { font-size:2.2rem; display:block; margin-bottom:0.5rem; }
+.drop-text { color:var(--text); font-weight:600; margin:0; font-size:0.95rem; }
+.drop-sub { color:var(--text-muted); font-size:0.78rem; margin:4px 0 0; }
+
+.preview-img { width:100%; max-height:280px; object-fit:cover; border-radius:12px; display:block; }
+.preview-remove-btn { position:absolute; top:8px; right:8px; background:rgba(220,38,38,0.85); color:white; border:none; border-radius:8px; padding:4px 12px; font-size:0.78rem; cursor:pointer; }
+
+.webcam-viewport { position:relative; border-radius:14px; overflow:hidden; background:var(--tip-bg); border:1px solid var(--border); min-height:240px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+#webcam-video { width:100%; border-radius:14px; display:block; }
+.cam-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; color:var(--text-muted); gap:4px; }
+.cam-placeholder p { margin:0; font-size:0.9rem; }
+
+.scan-frame { position:absolute; inset:12px; border:2px solid transparent; border-radius:8px; pointer-events:none; opacity:0; transition:opacity 0.3s; }
+.scan-frame.active { opacity:1; border-color:var(--green-mid); animation:scanPulse 2s ease-in-out infinite; }
+.scan-line { position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--green-mid),transparent); animation:scanLine 2s linear infinite; }
+@keyframes scanPulse { 0%,100%{box-shadow:0 0 0 0 rgba(46,125,50,0.3);} 50%{box-shadow:0 0 0 8px rgba(46,125,50,0);} }
+@keyframes scanLine { 0%{top:0;opacity:1;} 90%{top:100%;opacity:1;} 100%{top:100%;opacity:0;} }
+
+.cam-controls { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px; }
+.cam-btn-capture { width:60px; height:60px; border-radius:50%; background:var(--green-mid); border:4px solid rgba(46,125,50,0.3); color:white; font-size:1.4rem; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(46,125,50,0.4); }
+.cam-btn-capture:hover { transform:scale(1.08); }
+.cam-btn-secondary { width:42px; height:42px; border-radius:50%; background:var(--tip-bg); border:1px solid var(--border); color:var(--text-muted); font-size:1rem; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; }
+.cam-btn-secondary:hover { color:var(--text); border-color:var(--green-mid); }
+</style>
+
+<script>
+let stream = null;
+let facingMode = 'environment';
+let hasCaptured = false;
+let currentTab = 'upload';
+
+function showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+    const bar = document.getElementById('loadingBar');
+    const s1 = document.getElementById('step1');
+    const s2 = document.getElementById('step2');
+    const s3 = document.getElementById('step3');
+    bar.style.width = '20%';
+    setTimeout(() => { s1.classList.remove('active'); s1.classList.add('done'); s2.classList.add('active'); bar.style.width = '55%'; }, 1000);
+    setTimeout(() => { s2.classList.remove('active'); s2.classList.add('done'); s3.classList.add('active'); bar.style.width = '85%'; }, 2500);
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+    document.getElementById('tab-camera').classList.toggle('active', tab === 'camera');
+    document.getElementById('upload-panel').style.display = tab === 'upload' ? 'block' : 'none';
+    document.getElementById('camera-panel').style.display = tab === 'camera' ? 'block' : 'none';
+    if (tab === 'camera' && !hasCaptured) startCamera();
+    if (tab === 'upload') stopCamera();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('upload-preview-img').src = e.target.result;
+        document.getElementById('upload-preview-wrap').style.display = 'block';
+        document.getElementById('drop-zone').style.display = 'none';
+        document.getElementById('upload-submit-btn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearUpload() {
+    document.getElementById('file-input').value = '';
+    document.getElementById('upload-preview-wrap').style.display = 'none';
+    document.getElementById('drop-zone').style.display = 'block';
+    document.getElementById('upload-submit-btn').disabled = true;
+}
+
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const dt = new DataTransfer(); dt.items.add(file);
+        document.getElementById('file-input').files = dt.files;
+        handleFileSelect({ target: { files: [file] } });
+    }
+});
+
+document.getElementById('upload-form').addEventListener('submit', () => showLoading());
+
+async function startCamera() {
+    if (hasCaptured) return;
+    try {
+        if (stream) stopCamera(false);
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width:{ideal:1280}, height:{ideal:960} } });
+        const video = document.getElementById('webcam-video');
+        video.srcObject = stream; video.style.display = 'block';
+        document.getElementById('cam-placeholder').style.display = 'none';
+        document.getElementById('cam-controls').style.display = 'flex';
+        document.getElementById('scan-frame').classList.add('active');
+    } catch(err) {
+        document.getElementById('cam-placeholder').innerHTML = `<span style="font-size:2rem;">🚫</span><p style="color:var(--text-muted);">Camera access denied.<br><small>Check browser permissions.</small></p>`;
+    }
+}
+
+function stopCamera(resetUI=true) {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    document.getElementById('scan-frame').classList.remove('active');
+    if (resetUI) {
+        document.getElementById('webcam-video').style.display = 'none';
+        document.getElementById('cam-controls').style.display = 'none';
+        document.getElementById('cam-placeholder').style.display = 'flex';
+    }
+}
+
+function flipCamera() { facingMode = facingMode === 'environment' ? 'user' : 'environment'; if (stream) startCamera(); }
+
+function capturePhoto() {
+    const video = document.getElementById('webcam-video');
+    const canvas = document.getElementById('capture-canvas');
+    canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const vp = document.getElementById('webcam-viewport');
+    vp.style.filter = 'brightness(3)';
+    setTimeout(() => { vp.style.transition = 'filter 0.3s'; vp.style.filter = 'brightness(1)'; }, 60);
+    document.getElementById('webcam-image-data').value = dataUrl;
+    document.getElementById('cam-preview-img').src = dataUrl;
+    document.getElementById('cam-preview-img').style.display = 'block';
+    document.getElementById('webcam-video').style.display = 'none';
+    document.getElementById('cam-controls').style.display = 'none';
+    document.getElementById('scan-frame').classList.remove('active');
+    document.getElementById('retake-wrap').style.display = 'block';
+    document.getElementById('camera-submit-btn').disabled = false;
+    stopCamera(false); hasCaptured = true;
+}
+
+function retakePhoto() {
+    hasCaptured = false;
+    document.getElementById('webcam-image-data').value = '';
+    document.getElementById('cam-preview-img').style.display = 'none';
+    document.getElementById('retake-wrap').style.display = 'none';
+    document.getElementById('camera-submit-btn').disabled = true;
+    startCamera();
+}
+
+document.getElementById('camera-form').addEventListener('submit', function(e) {
+    const camData = document.getElementById('webcam-image-data').value;
+    if (!camData) return;
+    e.preventDefault();
+    showLoading();
+    fetch(camData).then(r => r.blob()).then(blob => {
+        const file = new File([blob], 'webcam_capture.jpg', { type:'image/jpeg' });
+        const dt = new DataTransfer(); dt.items.add(file);
+        const fi = document.createElement('input');
+        fi.type='file'; fi.name='file'; fi.style.display='none'; fi.files=dt.files;
+        this.appendChild(fi);
+        document.getElementById('webcam-image-data').name = '';
+        this.submit();
+    });
+});
+
+window.addEventListener('beforeunload', () => stopCamera());
 </script>
 {% endblock %}

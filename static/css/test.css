@@ -599,39 +599,75 @@ body.dark-mode .confidence-fill {
     cursor: pointer;
 }
 
+/* ── dropdown card styling ── */
+
 .nav-dropdown {
     position: absolute;
-    top: 48px;
+    top: 52px;
     right: 0;
     background: var(--dropdown-bg);
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    width: 220px;
-    padding: 12px;
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+    width: 230px;
+    padding: 14px;
     display: none;
     z-index: 1000;
     border: 1px solid var(--border);
     transition: background var(--transition);
 }
 
-.nav-dropdown.show { display: block; }
+.nav-dropdown.show { display: block; animation: dropIn 0.2s ease; }
+
+@keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .dropdown-name {
     font-weight: 600;
     color: var(--text);
+    font-size: 0.95rem;
 }
 
 .dropdown-email {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-light);
+    word-break: break-all;
+    margin-top: 2px;
 }
 
 .dropdown-link {
-    display: block;
-    color: #c62828;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 8px;
     text-decoration: none;
     font-weight: 500;
-    margin-top: 4px;
+    font-size: 0.88rem;
+    transition: all 0.15s ease;
+    margin-top: 2px;
+    color: var(--text) !important;
+}
+
+.dropdown-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+body:not(.dark-mode) .dropdown-link:hover {
+    background: rgba(46, 125, 50, 0.1);
+    color: var(--green-dark) !important;
+}
+
+.dropdown-link[href="/logout"] {
+    color: #ef5350 !important;
+}
+
+.dropdown-link[href="/logout"]:hover {
+    background: rgba(239, 83, 80, 0.15);
+    color: #ef5350 !important;
 }
 
 /* ═══════════════════════════════════════════

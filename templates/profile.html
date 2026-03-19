@@ -1,27 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{# ── Pre-compute stats ── #}
+{% set total = scan_history | length %}
+{% set disease_count = scan_history | selectattr('disease', 'ne', 'Healthy') | list | length %}
+{% set avg_conf = (scan_history | map(attribute='confidence') | list | sum / total) | round(1) if total > 0 else 0 %}
+
+{# Count by category #}
+{% set ns = namespace(fungal=0, bacterial=0, viral=0, pest=0, healthy=0) %}
+{% for s in scan_history %}
+    {% if 'Healthy' in s.disease %}{% set ns.healthy = ns.healthy + 1 %}
+    {% elif 'Bacterial' in s.disease or 'Spot' in s.disease and 'Bacterial' in s.disease %}{% set ns.bacterial = ns.bacterial + 1 %}
+    {% elif 'Virus' in s.disease or 'Mosaic' in s.disease or 'Curl' in s.disease %}{% set ns.viral = ns.viral + 1 %}
+    {% elif 'Mites' in s.disease %}{% set ns.pest = ns.pest + 1 %}
+    {% else %}{% set ns.fungal = ns.fungal + 1 %}
+    {% endif %}
+{% endfor %}
+
 <div class="profile-page">
 
     <!-- ── HERO CARD ── -->
     <div class="profile-hero-card">
-
-        <!-- Avatar -->
         <div class="profile-avatar-wrap">
             {% if session.get("picture") %}
                 <img src="{{ session.get('picture') }}" alt="Profile" class="profile-avatar-img" referrerpolicy="no-referrer">
             {% else %}
-                <div class="profile-avatar-initial">
-                    {{ session.get("name", "U")[0]|upper }}
-                </div>
+                <div class="profile-avatar-initial">{{ session.get("name", "U")[0]|upper }}</div>
             {% endif %}
         </div>
-
-        <!-- Name & Email -->
         <h2 class="profile-name">{{ session.get("name", "User") }}</h2>
         <p class="profile-email">{{ session.get("email", "") }}</p>
-
-        <!-- Account type badge -->
         {% if session.get("picture") %}
             <span class="profile-badge google-badge">🔗 Google Account</span>
         {% else %}
@@ -31,44 +40,88 @@
         <!-- Stats row -->
         <div class="profile-stats">
             <div class="profile-stat">
-                <span class="stat-num">{{ scan_history | length }}</span>
+                <span class="stat-num">{{ total }}</span>
                 <span class="stat-label">Total Scans</span>
             </div>
             <div class="profile-stat-divider"></div>
             <div class="profile-stat">
-                {% if scan_history %}
-                    <span class="stat-num">{{ scan_history[0].disease.split()[0] }}</span>
-                    <span class="stat-label">Last Scan</span>
-                {% else %}
-                    <span class="stat-num">—</span>
-                    <span class="stat-label">Last Scan</span>
-                {% endif %}
+                <span class="stat-num">{{ healthy_count }}</span>
+                <span class="stat-label">Healthy</span>
             </div>
             <div class="profile-stat-divider"></div>
             <div class="profile-stat">
-                {% if scan_history %}
-                
-                    <span class="stat-num">{{ healthy_count }}</span>
-                {% else %}
-                    <span class="stat-num">0</span>
-                {% endif %}
-                <span class="stat-label">Healthy</span>
+                <span class="stat-num">{{ avg_conf }}%</span>
+                <span class="stat-label">Avg Confidence</span>
+            </div>
+            <div class="profile-stat-divider"></div>
+            <div class="profile-stat">
+                <span class="stat-num">{{ total - healthy_count }}</span>
+                <span class="stat-label">Diseases Found</span>
             </div>
         </div>
     </div>
 
+    <!-- ── CHARTS ROW ── -->
+    {% if total > 0 %}
+    <div class="charts-row">
+
+        <!-- Donut chart: Healthy vs Disease -->
+        <div class="chart-card">
+            <div class="chart-title">🥧 Scan Breakdown</div>
+            <div class="donut-wrap">
+                <canvas id="donutChart" width="160" height="160"></canvas>
+                <div class="donut-center">
+                    <span class="donut-pct">{{ ((healthy_count / total) * 100) | round | int }}%</span>
+                    <span class="donut-label">Healthy</span>
+                </div>
+            </div>
+            <div class="donut-legend">
+                <span class="legend-dot" style="background:#4ade80"></span> Healthy ({{ healthy_count }})
+                &nbsp;&nbsp;
+                <span class="legend-dot" style="background:#f87171"></span> Diseased ({{ total - healthy_count }})
+            </div>
+        </div>
+
+        <!-- Bar chart: Disease categories -->
+        <div class="chart-card">
+            <div class="chart-title">📊 Disease Categories</div>
+            <div class="bar-chart">
+                {% set cats = [
+                    ("Fungal",    ns.fungal,    "#f59e0b"),
+                    ("Bacterial", ns.bacterial, "#ef4444"),
+                    ("Viral",     ns.viral,     "#a78bfa"),
+                    ("Pest",      ns.pest,      "#fb923c"),
+                    ("Healthy",   ns.healthy,   "#4ade80"),
+                ] %}
+                {% for name, count, color in cats %}
+                {% if count > 0 %}
+                <div class="bar-row">
+                    <span class="bar-label">{{ name }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:{{ ((count / total) * 100) | round | int }}%; background:{{ color }};"></div>
+                    </div>
+                    <span class="bar-count">{{ count }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if ns.fungal == 0 and ns.bacterial == 0 and ns.viral == 0 and ns.pest == 0 and ns.healthy == 0 %}
+                <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:20px 0;">No data yet</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
     <!-- ── SCAN HISTORY ── -->
     <div class="profile-section">
         <h3 class="profile-section-title">📋 Scan History</h3>
-
         {% if scan_history and scan_history | length > 0 %}
         <div class="profile-history-grid">
             {% for scan in scan_history %}
             <div class="profile-history-card {% if 'Healthy' in scan.disease %}healthy-card{% else %}disease-card{% endif %}">
                 <div class="phc-top">
-                    <div class="phc-icon">
-                        {% if 'Healthy' in scan.disease %}✅{% else %}🔬{% endif %}
-                    </div>
+                    <div class="phc-icon">{% if 'Healthy' in scan.disease %}✅{% else %}🔬{% endif %}</div>
                     <div class="phc-info">
                         <div class="phc-disease">{{ scan.disease }}</div>
                         <div class="phc-time">{{ scan.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
@@ -104,307 +157,147 @@
 </div>
 
 <style>
-/* ── PAGE LAYOUT ── */
-.profile-page {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 110px 20px 60px;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-}
+.profile-page { max-width: 780px; margin: 0 auto; padding: 110px 20px 60px; display: flex; flex-direction: column; gap: 24px; }
 
-/* ── HERO CARD ── */
-.profile-hero-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 40px 30px 32px;
-    text-align: center;
-    box-shadow: var(--card-shadow);
-    transition: background var(--transition);
-}
+/* Hero */
+.profile-hero-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:40px 30px 32px; text-align:center; box-shadow:var(--card-shadow); }
+.profile-avatar-wrap { margin:0 auto 16px; width:96px; height:96px; border-radius:50%; border:3px solid var(--green-light); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.profile-avatar-img { width:100%; height:100%; object-fit:cover; }
+.profile-avatar-initial { width:100%; height:100%; background:linear-gradient(135deg,var(--green-mid),var(--green-dark)); color:#fff; font-size:2.4rem; font-weight:700; display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; }
+.profile-name { font-family:'Poppins',sans-serif; font-size:1.6rem; font-weight:700; color:var(--text); margin:0 0 6px; }
+.profile-email { font-size:0.9rem; color:var(--text-muted); margin:0 0 14px; }
+.profile-badge { display:inline-block; font-size:0.75rem; font-weight:600; padding:5px 14px; border-radius:999px; margin-bottom:24px; }
+.google-badge { background:rgba(66,133,244,0.12); color:#4285f4; border:1px solid rgba(66,133,244,0.3); }
+.normal-badge { background:var(--tip-bg); color:var(--green-mid); border:1px solid var(--section-border); }
 
-.profile-avatar-wrap {
-    margin: 0 auto 16px;
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    border: 3px solid var(--green-light);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* Stats */
+.profile-stats { display:flex; align-items:center; justify-content:center; background:var(--tip-bg); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.profile-stat { flex:1; padding:18px 12px; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.profile-stat-divider { width:1px; height:40px; background:var(--border); flex-shrink:0; }
+.stat-num { font-family:'Poppins',sans-serif; font-size:1.3rem; font-weight:700; color:var(--green-mid); line-height:1; }
+.stat-label { font-size:0.68rem; color:var(--text-light); text-transform:uppercase; letter-spacing:0.06em; text-align:center; }
 
-.profile-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+/* Charts row */
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:600px) { .charts-row { grid-template-columns:1fr; } }
 
-.profile-avatar-initial {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--green-mid), var(--green-dark));
-    color: #fff;
-    font-size: 2.4rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Poppins', sans-serif;
-}
+.chart-card { background:var(--card-bg); border:1px solid var(--border); border-radius:18px; padding:24px 20px; box-shadow:var(--card-shadow); }
+.chart-title { font-family:'Poppins',sans-serif; font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:16px; }
 
-.profile-name {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0 0 6px;
-}
+/* Donut */
+.donut-wrap { position:relative; width:160px; height:160px; margin:0 auto 12px; }
+.donut-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+.donut-pct { font-family:'Poppins',sans-serif; font-size:1.6rem; font-weight:700; color:var(--green-mid); line-height:1; }
+.donut-label { font-size:0.7rem; color:var(--text-muted); margin-top:2px; }
+.donut-legend { text-align:center; font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; }
+.legend-dot { display:inline-block; width:10px; height:10px; border-radius:50%; }
 
-.profile-email {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin: 0 0 14px;
-}
+/* Bar chart */
+.bar-chart { display:flex; flex-direction:column; gap:10px; }
+.bar-row { display:flex; align-items:center; gap:10px; }
+.bar-label { font-size:0.75rem; color:var(--text-muted); width:68px; flex-shrink:0; }
+.bar-track { flex:1; height:8px; background:var(--border); border-radius:999px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:999px; transition:width 1s ease; }
+.bar-count { font-size:0.75rem; font-weight:600; color:var(--text); width:20px; text-align:right; flex-shrink:0; }
 
-.profile-badge {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 5px 14px;
-    border-radius: 999px;
-    margin-bottom: 28px;
-}
+/* Section */
+.profile-section { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:28px; box-shadow:var(--card-shadow); }
+.profile-section-title { font-family:'Poppins',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text); margin:0 0 20px; }
 
-.google-badge {
-    background: rgba(66, 133, 244, 0.12);
-    color: #4285f4;
-    border: 1px solid rgba(66, 133, 244, 0.3);
-}
+/* History */
+.profile-history-grid { display:flex; flex-direction:column; gap:12px; }
+.profile-history-card { background:var(--history-bg); border:1px solid var(--border); border-radius:14px; padding:14px 16px; transition:all 0.2s ease; }
+.profile-history-card:hover { transform:translateX(4px); background:var(--history-hover); }
+.healthy-card { border-left:3px solid #4caf50; }
+.disease-card  { border-left:3px solid #ef9a9a; }
+.phc-top { display:flex; align-items:center; gap:12px; }
+.phc-icon { font-size:1.3rem; flex-shrink:0; }
+.phc-info { flex:1; min-width:0; }
+.phc-disease { font-weight:600; font-size:0.9rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.phc-time { font-size:0.75rem; color:var(--text-light); margin-top:2px; }
+.phc-conf { font-weight:700; font-size:0.9rem; flex-shrink:0; }
+.conf-high { color:#4caf50; } .conf-mid { color:#ffa726; } .conf-low { color:#ef5350; }
+.phc-bar { height:4px; background:var(--border); border-radius:999px; margin-top:10px; overflow:hidden; }
+.phc-bar-fill { height:100%; background:linear-gradient(to right,var(--green-mid),var(--green-light)); border-radius:999px; }
 
-.normal-badge {
-    background: var(--tip-bg);
-    color: var(--green-mid);
-    border: 1px solid var(--section-border);
-}
+/* Empty */
+.profile-empty { text-align:center; padding:40px 20px; color:var(--text-muted); }
+.profile-empty-icon { font-size:2.5rem; margin-bottom:12px; }
+.profile-empty p { margin-bottom:20px; font-size:0.9rem; }
+.profile-cta-btn { display:inline-block; background:var(--green-mid); color:#fff; font-weight:600; font-size:0.88rem; padding:12px 28px; border-radius:8px; text-decoration:none; transition:all 0.2s; }
+.profile-cta-btn:hover { background:var(--green-dark); transform:translateY(-2px); color:#fff; text-decoration:none; }
 
-/* ── STATS ── */
-.profile-stats {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    background: var(--tip-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: background var(--transition);
-}
+/* Actions */
+.profile-actions { display:flex; gap:12px; flex-wrap:wrap; }
+.profile-action-btn { flex:1; min-width:140px; text-align:center; padding:13px 24px; border-radius:10px; font-weight:600; font-size:0.88rem; text-decoration:none; transition:all 0.2s; }
+.primary-btn { background:var(--green-mid); color:#fff; }
+.primary-btn:hover { background:var(--green-dark); color:#fff; transform:translateY(-2px); text-decoration:none; }
+.danger-btn { background:transparent; color:#ef5350; border:1px solid #ef5350; }
+.danger-btn:hover { background:rgba(239,83,80,0.08); color:#ef5350; transform:translateY(-2px); text-decoration:none; }
 
-.profile-stat {
-    flex: 1;
-    padding: 20px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.profile-stat-divider {
-    width: 1px;
-    height: 40px;
-    background: var(--border);
-    flex-shrink: 0;
-}
-
-.stat-num {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--green-mid);
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.72rem;
-    color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-/* ── SECTION ── */
-.profile-section {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 28px 28px 24px;
-    box-shadow: var(--card-shadow);
-    transition: background var(--transition);
-}
-
-.profile-section-title {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text);
-    margin: 0 0 20px;
-}
-
-/* ── HISTORY GRID ── */
-.profile-history-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.profile-history-card {
-    background: var(--history-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
-    transition: all 0.2s ease;
-}
-
-.profile-history-card:hover {
-    transform: translateX(4px);
-    background: var(--history-hover);
-}
-
-.healthy-card { border-left: 3px solid #4caf50; }
-.disease-card  { border-left: 3px solid #ef9a9a; }
-
-.phc-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.phc-icon { font-size: 1.3rem; flex-shrink: 0; }
-
-.phc-info { flex: 1; min-width: 0; }
-
-.phc-disease {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.phc-time {
-    font-size: 0.75rem;
-    color: var(--text-light);
-    margin-top: 2px;
-}
-
-.phc-conf {
-    font-weight: 700;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.conf-high { color: #4caf50; }
-.conf-mid  { color: #ffa726; }
-.conf-low  { color: #ef5350; }
-
-.phc-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 999px;
-    margin-top: 10px;
-    overflow: hidden;
-}
-
-.phc-bar-fill {
-    height: 100%;
-    background: linear-gradient(to right, var(--green-mid), var(--green-light));
-    border-radius: 999px;
-    transition: width 0.6s ease;
-}
-
-/* ── EMPTY STATE ── */
-.profile-empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-}
-
-.profile-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.profile-empty p { margin-bottom: 20px; font-size: 0.9rem; }
-
-.profile-cta-btn {
-    display: inline-block;
-    background: var(--green-mid);
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.88rem;
-    padding: 12px 28px;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background 0.2s, transform 0.2s;
-}
-
-.profile-cta-btn:hover {
-    background: var(--green-dark);
-    transform: translateY(-2px);
-    color: #fff;
-    text-decoration: none;
-}
-
-/* ── ACTIONS ── */
-.profile-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.profile-action-btn {
-    flex: 1;
-    min-width: 140px;
-    text-align: center;
-    padding: 13px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.88rem;
-    text-decoration: none;
-    transition: background 0.2s, transform 0.2s;
-}
-
-.primary-btn {
-    background: var(--green-mid);
-    color: #fff;
-    border: 1px solid transparent;
-}
-
-.primary-btn:hover {
-    background: var(--green-dark);
-    color: #fff;
-    transform: translateY(-2px);
-    text-decoration: none;
-}
-
-.danger-btn {
-    background: transparent;
-    color: #ef5350;
-    border: 1px solid #ef5350;
-}
-
-.danger-btn:hover {
-    background: rgba(239, 83, 80, 0.08);
-    color: #ef5350;
-    transform: translateY(-2px);
-    text-decoration: none;
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 600px) {
-    .profile-page { padding: 100px 14px 50px; }
-    .profile-hero-card { padding: 30px 18px 24px; }
-    .stat-num { font-size: 1.1rem; }
+@media(max-width:600px) {
+    .profile-page { padding:100px 14px 50px; }
+    .profile-hero-card { padding:30px 18px 24px; }
+    .stat-num { font-size:1.1rem; }
+    .stat-label { font-size:0.62rem; }
 }
 </style>
+
+<script>
+// ── Donut chart ────────────────────────────
+const healthy = {{ healthy_count }};
+const total   = {{ total }};
+const diseased = total - healthy;
+
+if (total > 0) {
+    const canvas = document.getElementById('donutChart');
+    const ctx = canvas.getContext('2d');
+    const cx = 80, cy = 80, r = 60, stroke = 18;
+    const isDark = document.documentElement.classList.contains('dark-mode');
+
+    function drawDonut() {
+        ctx.clearRect(0, 0, 160, 160);
+        const healthyPct = healthy / total;
+        const diseasedPct = diseased / total;
+        const start1 = -Math.PI / 2;
+        const end1   = start1 + (2 * Math.PI * healthyPct);
+        const end2   = end1   + (2 * Math.PI * diseasedPct);
+
+        // Track
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.strokeStyle = isDark ? '#2d4a2d' : '#e5e7eb';
+        ctx.lineWidth = stroke;
+        ctx.stroke();
+
+        // Healthy arc
+        if (healthy > 0) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, start1, end1);
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = stroke;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+
+        // Diseased arc
+        if (diseased > 0) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, end1, end2);
+            ctx.strokeStyle = '#f87171';
+            ctx.lineWidth = stroke;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+    }
+
+    drawDonut();
+
+    // Redraw when theme changes
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        setTimeout(drawDonut, 50);
+    });
+}
+</script>
+
 {% endblock %}

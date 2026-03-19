@@ -2,7 +2,9 @@ import os
 import secrets
 import numpy as np
 import tensorflow as tf
+import time
 tf.keras.backend.clear_session()
+from PIL import Image as PILImage
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, send_from_directory
 from werkzeug.utils import secure_filename
@@ -317,6 +319,7 @@ def login():
 @app.route('/login/google')
 def login_google():
     redirect_uri = url_for('google_callback', _external=True)
+    print(">>> REDIRECT URI:", redirect_uri) 
     nonce = secrets.token_urlsafe(16)   # generate random nonce
     session['nonce'] = nonce            # save it in session
     return google.authorize_redirect(redirect_uri, nonce=nonce)  # send to Google
@@ -431,36 +434,82 @@ def about():
     return render_template("about.html")
 
 
+##   from PIL import Image as PILImage
+## ─────────────────────────────────────────────────────────────
+ 
+# ── Load ImageNet classifier once at startup ──────────────────
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input, decode_predictions
+
+imagenet_model = MobileNetV2(weights="imagenet", include_top=True)
+
+# Plant-related ImageNet class keywords
+PLANT_KEYWORDS = [
+    "leaf", "plant", "flower", "tree", "grass", "herb", "fern",
+    "fungus", "mushroom", "moss", "vegetable", "fruit", "crop",
+    "daisy", "rose", "cabbage", "cauliflower", "broccoli", "corn",
+    "cucumber", "pepper", "tomato", "potato", "strawberry", "grape",
+    "apple", "banana", "orange", "pineapple", "mango", "fig",
+    "bud", "petal", "twig", "shrub", "vine", "algae", "seaweed"
+]
+
+def is_likely_leaf(filepath):
+    try:
+        img = PILImage.open(filepath).convert("RGB").resize((224, 224))
+        x = np.array(img, dtype=np.float32)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        preds = imagenet_model.predict(x, verbose=0)
+        top5 = decode_predictions(preds, top=5)[0]
+        for (_, label, confidence) in top5:
+            label_lower = label.lower().replace("_", " ")
+            if any(kw in label_lower for kw in PLANT_KEYWORDS):
+                return True
+        return False
+    except Exception:
+        return True
+ 
+ 
 @app.route("/predict", methods=["POST"])
 @login_required
 def predict():
-
+ 
     file = request.files["file"]
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
-
-    # Image preprocessing
+ 
+   
+ 
+    # ── Image preprocessing ──────────────────────────────────
     img = load_img(filepath, target_size=(224, 224))
     x = img_to_array(img) / 255.0
     x = np.expand_dims(x, axis=0)
-
-    # Model prediction
+ 
+    # ── Model prediction ─────────────────────────────────────
     preds = model.predict(x)[0]
     sorted_indices = np.argsort(preds)[::-1]
 
+     # ── Leaf validation ──────────────────────────────────────
+    if not is_likely_leaf(filepath):
+        flash("🌿 This doesn't look like a plant leaf. Please upload a clear leaf image.", "warning")
+        return redirect(url_for("index"))
+ 
     top1_idx = sorted_indices[0]
     top2_idx = sorted_indices[1]
-
+ 
     top1_label = CLASS_NAMES[top1_idx]
     top2_label = CLASS_NAMES[top2_idx]
-
+ 
     top1_conf = round(float(preds[top1_idx]) * 100, 2)
     top2_conf = round(float(preds[top2_idx]) * 100, 2)
-
+ 
     info = disease_info[top1_label]
-
-    # ✅ SAVE SCAN TO DATABASE (USER-SPECIFIC)
+ 
+    # ── Low confidence warning ───────────────────────────────
+    low_confidence = top1_conf < 60
+ 
+    # ── Save scan to DB ──────────────────────────────────────
     cur = mysql.connection.cursor()
     cur.execute(
         """
@@ -477,6 +526,9 @@ def predict():
     mysql.connection.commit()
     cur.close()
 
+    time.sleep(3)
+ 
+
     return render_template(
         "result.html",
         prediction=top1_label,
@@ -485,7 +537,8 @@ def predict():
         alt_confidence=top2_conf,
         description=info["description"],
         cure=info["cure"],
-        image_path="/uploads/" + filename
+        image_path="/uploads/" + filename,
+        low_confidence=low_confidence
     )
 
 
