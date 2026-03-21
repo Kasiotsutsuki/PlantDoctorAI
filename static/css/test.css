@@ -65,6 +65,15 @@ body {
 /* ═══════════════════════════════════════════
    NAVBAR
    ═══════════════════════════════════════════ */
+
+a.brand-title {
+    text-decoration: none !important;
+    color: #ffffff !important;
+}
+a.brand-title:hover {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
 .navbar {
     position: fixed;
     top: 0;
@@ -84,9 +93,7 @@ body.dark-mode .navbar {
 
 .nav-container {
     width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 32px;
+    padding: 0 32px 0 70px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -105,22 +112,25 @@ body.dark-mode .navbar {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 12px;
+}
+
+.nav-links ~ * {
+    margin-left: auto;
 }
 
 .nav-item {
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     font-weight: 500;
-    letter-spacing: 0.4px;
-    position: relative;
-    padding: 10px 24px;
+    padding: 10px 26px;
     border-radius: 999px;
     overflow: hidden;
     color: #ffffff;
     text-decoration: none;
     z-index: 1;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
 }
 
 .nav-item::before {
@@ -259,10 +269,12 @@ body.dark-mode .navbar {
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    font-size: 22px;
     cursor: pointer;
     box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 body.dark-mode .menu-btn { background: #166534; }
@@ -1384,3 +1396,86 @@ body.dark-mode .badge-pest      { background: #2d1b00; color: #fbbf24; }
     .page-offset.shift { padding-left: 20px; }
     .upload-card { padding: 30px 20px; margin: 80px auto 0; }
 }
+
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+.site-footer {
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    position: relative;
+    width: 100%;
+}
+
+.footer-bottom {
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+@media (max-width: 640px) {
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        padding: 14px 20px;
+    }
+}
+
+/* ── Scan history popup ── */
+.scan-popup-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); z-index:9998; display:none; align-items:center; justify-content:center; }
+.scan-popup-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+.scan-popup-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; max-width:380px; width:90%; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.35); animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1); position:relative; }
+.scan-popup-close { position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.2); border:none; border-radius:50%; width:28px; height:28px; color:#fff; font-size:0.8rem; cursor:pointer; z-index:1; display:flex; align-items:center; justify-content:center; }
+.scan-popup-close:hover { background:rgba(0,0,0,0.4); }
+.scan-popup-img-wrap { width:100%; height:200px; overflow:hidden; background:var(--tip-bg); }
+.scan-popup-img { width:100%; height:100%; object-fit:cover; display:block; }
+.scan-popup-body { padding:20px; }
+.scan-popup-disease { font-family:'Poppins',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:8px; }
+.scan-popup-meta { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.scan-popup-meta span { font-size:0.78rem; color:var(--text-muted); }
+.scan-popup-bar-track { background:var(--border); border-radius:999px; height:6px; overflow:hidden; margin-bottom:16px; }
+.scan-popup-bar { height:100%; background:linear-gradient(90deg,var(--green-mid),var(--green-light)); border-radius:999px; transition:width 0.8s ease; }
+.scan-popup-learn-btn { display:block; background:linear-gradient(135deg,var(--green-mid),var(--green-dark)); color:#fff !important; text-align:center; padding:11px 20px; border-radius:10px; font-weight:600; font-size:0.88rem; text-decoration:none !important; transition:all 0.2s; }
+.scan-popup-learn-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(46,125,50,0.35); }
+
+.cam-dev-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9998; display:none; align-items:center; justify-content:center; }
+.cam-dev-overlay.show { display:flex; }
+.cam-dev-popup { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:2rem; max-width:360px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.cam-dev-popup-title { font-family:'Poppins',sans-serif; font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:10px; }
+.cam-dev-popup-desc { font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:16px; }
+.cam-dev-popup-tag { display:inline-block; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.3); border-radius:999px; font-size:0.75rem; color:#d97706; font-weight:600; padding:4px 14px; margin-bottom:16px; }
+.cam-dev-popup-btn { background:var(--green-mid); color:#fff; border:none; border-radius:10px; padding:10px 32px; font-family:'Poppins',sans-serif; font-weight:600; font-size:0.9rem; cursor:pointer; width:100%; transition:all 0.2s; }
+.cam-dev-popup-btn:hover { background:var(--green-dark); }
+
+.scan-popup-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); z-index:9998; display:none; align-items:center; justify-content:center; }
+.scan-popup-overlay.show { display:flex; }
+.scan-popup-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; max-width:380px; width:90%; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.35); position:relative; }
+.scan-popup-close { position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.3); border:none; border-radius:50%; width:28px; height:28px; color:#fff; font-size:0.8rem; cursor:pointer; z-index:1; display:flex; align-items:center; justify-content:center; }
+.scan-popup-img-wrap { width:100%; height:200px; overflow:hidden; background:var(--tip-bg); }
+.scan-popup-img { width:100%; height:100%; object-fit:cover; display:block; }
+.scan-popup-body { padding:20px; }
+.scan-popup-disease { font-family:'Poppins',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:8px; }
+.scan-popup-meta { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.scan-popup-meta span { font-size:0.78rem; color:var(--text-muted); }
+.scan-popup-bar-track { background:var(--border); border-radius:999px; height:6px; overflow:hidden; margin-bottom:16px; }
+.scan-popup-bar { height:100%; background:linear-gradient(90deg,var(--green-mid),var(--green-light)); border-radius:999px; transition:width 0.8s ease; }
+.scan-popup-learn-btn { display:block; background:linear-gradient(135deg,var(--green-mid),var(--green-dark)); color:#fff !important; text-align:center; padding:11px 20px; border-radius:10px; font-weight:600; font-size:0.88rem; text-decoration:none !important; transition:all 0.2s; }
+.scan-popup-learn-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(46,125,50,0.35); }
+
+.cam-under-dev-notice {
+    margin-top: 12px;
+    padding: 8px 14px;
+    background: rgba(234,179,8,0.1);
+    border: 1px solid rgba(234,179,8,0.3);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: #d97706;
+    text-align: center;
+}
+body.dark-mode .cam-under-dev-notice { color: #fbbf24; }

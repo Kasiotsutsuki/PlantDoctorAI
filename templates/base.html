@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Plant Doctor AI</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/test.css') }}" rel="stylesheet">
     <script>
-        // Apply saved theme BEFORE paint to prevent flash
         (function() {
             if (localStorage.getItem('theme') === 'dark') {
                 document.documentElement.classList.add('dark-mode');
@@ -15,17 +15,8 @@
         })();
     </script>
     <style>
-        .nav-avatar-img {
-            padding: 0 !important;
-            overflow: hidden;
-        }
-        .nav-avatar-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            display: block;
-        }
+        .nav-avatar-img { padding:0 !important; overflow:hidden; }
+        .nav-avatar-img img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
     </style>
 </head>
 
@@ -33,7 +24,7 @@
 
 <nav class="navbar fixed-top">
     <div class="nav-container">
-        <div class="brand-title">🌱 Plant Doctor AI</div>
+        <a href="/" class="brand-title">🌱 Plant Doctor AI</a>
         <div class="hamburger" id="hamburger">
             <span></span><span></span><span></span>
         </div>
@@ -41,10 +32,7 @@
             <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">Home</a>
             <a href="/learn" class="nav-item {% if request.path == '/learn' %}active{% endif %}">Learn</a>
             <a href="/about" class="nav-item {% if request.path == '/about' %}active{% endif %}">About</a>
-
-            <!-- Dark/Light Toggle -->
             <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
-
             {% if session.get("user_id") %}
             <div class="nav-avatar-wrapper">
                 {% if session.get("picture") %}
@@ -52,17 +40,15 @@
                     <img src="{{ session.get('picture') }}" alt="Profile" referrerpolicy="no-referrer">
                 </div>
                 {% else %}
-                <div class="nav-avatar" id="avatarBtn">
-                    {{ session.get("name", "U")[0]|upper }}
-                </div>
+                <div class="nav-avatar" id="avatarBtn">{{ session.get("name", "U")[0]|upper }}</div>
                 {% endif %}
                 <div class="nav-dropdown" id="avatarMenu">
                     <div class="dropdown-name">{{ session.name }}</div>
                     <div class="dropdown-email" style="font-size:0.78rem; word-break:break-all;">{{ session.email }}</div>
                     <hr>
-                    <a href="/profile" class="dropdown-link" style="color: var(--green-mid); margin-bottom: 6px; display:block;">👤 Profile</a>
+                    <a href="/profile" class="dropdown-link">👤 Profile</a>
                     <hr>
-                    <a href="/logout" class="dropdown-link">Logout</a>
+                    <a href="/logout" class="dropdown-link dropdown-logout">Logout</a>
                 </div>
             </div>
             {% else %}
@@ -72,14 +58,20 @@
     </div>
 </nav>
 
-<button id="menu-btn" class="menu-btn">☰</button>
+<!-- ── History button (clock icon) ── -->
+<button id="menu-btn" class="menu-btn" title="Scan History">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+    </svg>
+</button>
 
 <div id="sidebar" class="sidebar">
-    <h5 class="sidebar-title">📜 Scan History</h5>
+    <h5 class="sidebar-title">🕐 Scan History</h5>
     <ul class="history-list fancy-history">
     {% if scan_history and scan_history|length > 0 %}
         {% for scan in scan_history %}
-        <li class="history-card" onclick="selectScan(this)">
+        <li class="history-card" onclick="showScanPopup('{{ scan.disease }}', '{{ scan.confidence }}', '{{ scan.created_at.strftime('%d %b %Y, %I:%M %p') }}', '{{ scan.image_path }}')">
             <div class="history-main">
                 <span class="history-disease">{{ scan.disease }}</span>
                 <span class="history-confidence">{{ scan.confidence }}%</span>
@@ -94,6 +86,31 @@
         <li class="empty">No scans yet</li>
     {% endif %}
     </ul>
+</div>
+
+<!-- ── Scan History Popup ── -->
+<div id="scan-popup-overlay" class="scan-popup-overlay" onclick="closeScanPopup()">
+    <div class="scan-popup-card" onclick="event.stopPropagation()">
+        <button class="scan-popup-close" onclick="closeScanPopup()">✕</button>
+
+        <div class="scan-popup-img-wrap">
+            <img id="popup-img" src="" alt="Scan image" class="scan-popup-img">
+        </div>
+
+        <div class="scan-popup-body">
+            <div class="scan-popup-disease" id="popup-disease"></div>
+            <div class="scan-popup-meta">
+                <span id="popup-conf"></span>
+                <span id="popup-time"></span>
+            </div>
+            <div class="scan-popup-bar-track">
+                <div class="scan-popup-bar" id="popup-bar"></div>
+            </div>
+            <a id="popup-learn-link" href="#" class="scan-popup-learn-btn">
+                📖 View in Disease Library
+            </a>
+        </div>
+    </div>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -136,11 +153,45 @@ function selectScan(el) {
     document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
 }
+
+// ── Scan history popup ─────────────────────
+function showScanPopup(disease, confidence, time, imagePath) {
+    document.getElementById('popup-disease').textContent = disease;
+    document.getElementById('popup-conf').textContent = '📊 ' + confidence + '% confidence';
+    document.getElementById('popup-time').textContent = '🕐 ' + time;
+
+    const bar = document.getElementById('popup-bar');
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = confidence + '%'; }, 100);
+
+    const img = document.getElementById('popup-img');
+    const imgWrap = document.querySelector('.scan-popup-img-wrap');
+    if (imagePath && imagePath !== 'None' && imagePath !== '') {
+        img.src = imagePath;
+        imgWrap.style.display = 'block';
+    } else {
+        imgWrap.style.display = 'none';
+    }
+
+    const cardId = 'card-' + disease.toLowerCase().replace(/ /g, '-');
+    document.getElementById('popup-learn-link').href = '/learn#' + cardId;
+
+    document.getElementById('scan-popup-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeScanPopup() {
+    document.getElementById('scan-popup-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeScanPopup();
+});
 </script>
 
 <script src="{{ url_for('static', filename='js/history.js') }}"></script>
 
-<!-- DARK / LIGHT MODE -->
 <script>
 const toggle = document.getElementById('themeToggle');
 
@@ -158,6 +209,13 @@ toggle.addEventListener('click', () => {
     applyTheme(isDark);
 });
 </script>
+
+<footer class="site-footer">
+    <div class="footer-bottom">
+        <span>© 2025 Plant Doctor AI — Built with Flask & TensorFlow</span>
+        <span>BCA Final Year Project • Bhavan's Vivekananda College</span>
+    </div>
+</footer>
 
 </body>
 </html>

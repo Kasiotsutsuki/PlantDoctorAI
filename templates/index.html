@@ -34,7 +34,7 @@
 
         <div class="capture-tabs mb-4">
             <button type="button" class="capture-tab active" id="tab-upload" onclick="switchTab('upload')">📁 Upload Image</button>
-            <button type="button" class="capture-tab" id="tab-camera" onclick="switchTab('camera')">📷 Use Camera</button>
+            <button type="button" class="capture-tab" id="tab-camera" onclick="showCameraDevPopup()">📷 Use Camera</button>
         </div>
 
         <div id="upload-panel">
@@ -54,16 +54,36 @@
         </div>
 
         <div id="camera-panel" style="display:none;">
-            <form action="/predict" method="post" enctype="multipart/form-data" id="camera-form">
-                <input type="hidden" name="webcam_image" id="webcam-image-data">
-                <div class="webcam-viewport" id="webcam-viewport">
-                    <video id="webcam-video" autoplay playsinline muted style="display:none;"></video>
-                    <img id="cam-preview-img" class="preview-img" style="display:none;" alt="Captured">
-                    <div class="cam-placeholder" id="cam-placeholder">
-                        <span style="font-size:2.5rem;">📷</span>
-                        <p>Camera not started</p>
-                        <button type="button" class="btn btn-success px-4 py-2 mt-2" onclick="startCamera()">Start Camera</button>
-                    </div>
+    <form action="/predict" method="post" enctype="multipart/form-data" id="camera-form">
+        <input type="hidden" name="webcam_image" id="webcam-image-data">
+        <div class="webcam-viewport" id="webcam-viewport">
+            <video id="webcam-video" autoplay playsinline muted style="display:none;"></video>
+            <img id="cam-preview-img" class="preview-img" style="display:none;" alt="Captured">
+            <div class="cam-placeholder" id="cam-placeholder">
+                <span style="font-size:2.5rem;">📷</span>
+                <p>Camera not started</p>
+                <button type="button" class="btn btn-success px-4 py-2 mt-2" onclick="startCamera()">Start Camera</button>
+            </div>
+            <div class="scan-frame" id="scan-frame"><div class="scan-line"></div></div>
+        </div>
+        <div class="cam-controls" id="cam-controls" style="display:none;">
+            <button type="button" class="cam-btn-secondary" onclick="flipCamera()" title="Flip">🔄</button>
+            <button type="button" class="cam-btn-capture" onclick="capturePhoto()" title="Capture">📸</button>
+            <button type="button" class="cam-btn-secondary" onclick="stopCamera()" title="Stop">⏹</button>
+        </div>
+        <div id="retake-wrap" style="display:none; margin-top:10px;">
+            <button type="button" class="btn btn-outline-secondary btn-sm px-4" onclick="retakePhoto()">↺ Retake Photo</button>
+        </div>
+        <!-- Under development notice -->
+        <div class="cam-under-dev-notice">
+            🚧 Result feature under development — camera preview only
+        </div>
+        <canvas id="capture-canvas" style="display:none;"></canvas>
+        <button type="submit" class="btn btn-success mt-3 px-5 py-2" id="camera-submit-btn" disabled>🔍 Analyze Plant</button>
+    </form>
+</div>
+
+ <small class="text-muted d-block mt-3">Best results with clear, well-lit leaf images • Supported: JPG, PNG</small>
                     <div class="scan-frame" id="scan-frame"><div class="scan-line"></div></div>
                 </div>
                 <div class="cam-controls" id="cam-controls" style="display:none;">
@@ -75,11 +95,12 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm px-4" onclick="retakePhoto()">↺ Retake Photo</button>
                 </div>
                 <canvas id="capture-canvas" style="display:none;"></canvas>
-                <button type="submit" class="btn btn-success mt-3 px-5 py-2" id="camera-submit-btn" disabled>🔍 Analyze Plant</button>
+                
             </form>
         </div>
+        
 
-        <small class="text-muted d-block mt-3">Best results with clear, well-lit leaf images • Supported: JPG, PNG</small>
+        
     </div>
 </div>
 
@@ -179,7 +200,44 @@
     </div>
 </div>
 
+
+
+   <!-- Camera Dev Popup -->
+<div id="cam-dev-overlay" class="cam-dev-overlay" onclick="closeCameraDevPopup()">
+    <div class="cam-dev-popup" onclick="event.stopPropagation()">
+        <div style="font-size:3rem; margin-bottom:12px;">🚧</div>
+        <h4 class="cam-dev-popup-title">Camera Capture — Preview</h4>
+        <p class="cam-dev-popup-desc">This feature is currently <strong>under development</strong> and will be fully integrated in the next release. What you're about to see is a working prototype of how it will look.</p>
+        <div class="cam-dev-popup-tag">📅 Future Scope</div>
+        <button class="cam-dev-popup-btn" onclick="closeCameraDevPopup()">Got it, show me! </button>
+    </div>
+</div>
+
 <style>
+
+   /* Camera dev panel */
+.cam-dev-panel {
+    background: var(--tip-bg);
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 12px;
+}
+.cam-dev-icon { font-size: 2.5rem; margin-bottom: 8px; }
+.cam-dev-title { font-family:'Poppins',sans-serif; font-weight:600; color:var(--text); margin-bottom:8px; }
+.cam-dev-badge { display:inline-block; background:rgba(234,179,8,0.15); color:#d97706; border:1px solid rgba(234,179,8,0.3); border-radius:999px; font-size:0.75rem; font-weight:600; padding:4px 14px; margin-bottom:10px; }
+.cam-dev-desc { font-size:0.82rem; color:var(--text-muted); margin:0; }
+
+/* Camera dev popup */
+.cam-dev-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9998; display:none; align-items:center; justify-content:center; }
+.cam-dev-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+.cam-dev-popup { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:2rem; max-width:360px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.cam-dev-popup-title { font-family:'Poppins',sans-serif; font-size:1.1rem; font-weight:700; color:var(--text); margin-bottom:10px; }
+.cam-dev-popup-desc { font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:16px; }
+.cam-dev-popup-tag { display:inline-block; background:var(--tip-bg); border:1px solid var(--border); border-radius:999px; font-size:0.75rem; color:var(--green-mid); font-weight:600; padding:4px 14px; margin-bottom:16px; }
+.cam-dev-popup-btn { background:var(--green-mid); color:#fff; border:none; border-radius:10px; padding:10px 32px; font-family:'Poppins',sans-serif; font-weight:600; font-size:0.9rem; cursor:pointer; transition:all 0.2s; }
+.cam-dev-popup-btn:hover { background:var(--green-dark); transform:translateY(-1px); } 
 /* ── Shared ─────────────────────────────── */
 .hiw-label {
     font-size:0.7rem; font-weight:600; letter-spacing:0.22em;
@@ -400,6 +458,14 @@ let stream = null;
 let facingMode = 'environment';
 let hasCaptured = false;
 let currentTab = 'upload';
+
+function showCameraDevPopup() {
+    document.getElementById('cam-dev-overlay').classList.add('show');
+}
+function closeCameraDevPopup() {
+    document.getElementById('cam-dev-overlay').classList.remove('show');
+    switchTab('camera');
+}
 
 function showLoading() {
     document.getElementById('loading-overlay').style.display = 'flex';
