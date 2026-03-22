@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow as tf
 import time
 tf.keras.backend.clear_session()
+import pymysql
+pymysql.install_as_MySQLdb()
 from PIL import Image as PILImage
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, send_from_directory
